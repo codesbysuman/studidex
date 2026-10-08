@@ -12,6 +12,7 @@ import {
     Settings,
 } from "lucide-react";
 import { motion } from "motion/react";
+import { StudidexLogo } from "./logo";
 
 const navigation = [
     {
@@ -54,14 +55,15 @@ export function Navigation() {
     return (
         <>
             {/* Desktop sidebar */}
-            <aside className="fixed inset-y-0 left-0 z-50 hidden w-[220px] border-r border-border-subtle bg-background md:flex md:flex-col">
+            <aside className="fixed inset-y-0 left-0 z-50 hidden w-55 border-r border-border-subtle bg-background md:flex md:flex-col">
                 {/* Brand */}
                 <div className="px-5 pt-7">
                     <Link
                         href="/"
-                        className="inline-flex items-center text-[15px] font-semibold tracking-[-0.03em] text-foreground"
+                        className="inline-flex items-center gap-2.5 text-[15px] font-semibold tracking-[-0.03em] text-foreground"
                     >
-                        Studidex
+                        <StudidexLogo size={20} />
+                        <span>Studidex</span>
                     </Link>
                 </div>
 
@@ -96,8 +98,8 @@ export function Navigation() {
                                         whileTap={{ scale: 0.98 }}
                                         transition={spring}
                                         className={`relative flex h-11 items-center gap-3 rounded-xl px-3 text-[13px] font-medium ${active
-                                                ? "text-inverse-foreground"
-                                                : "text-foreground-muted hover:text-foreground"
+                                            ? "text-inverse-foreground"
+                                            : "text-foreground-muted hover:text-foreground"
                                             }`}
                                     >
                                         <Icon
@@ -147,7 +149,7 @@ export function Navigation() {
             {/* Mobile floating navigation */}
             <motion.nav
                 layout
-                className="fixed bottom-5 left-1/2 z-50 flex -translate-x-1/2 items-center rounded-2xl border border-border bg-inverse p-1.5 shadow-[0_12px_40px_rgb(0_0_0_/_0.16)] md:hidden"
+                className="fixed bottom-5 left-1/2 z-50 flex -translate-x-1/2 items-center rounded-2xl border border-border bg-inverse p-1.5 shadow-[0_12px_40px_rgb(0_0_0/0.16)] md:hidden"
                 transition={spring}
             >
                 {navigation.map((item) => {
@@ -166,8 +168,8 @@ export function Navigation() {
                                 whileTap={{ scale: 0.92 }}
                                 transition={spring}
                                 className={`relative flex h-11 items-center overflow-hidden rounded-xl px-3 ${active
-                                        ? "text-inverse"
-                                        : "text-inverse-foreground/50 hover:text-inverse-foreground"
+                                    ? "text-inverse"
+                                    : "text-inverse-foreground/50 hover:text-inverse-foreground"
                                     }`}
                             >
                                 {active && (
