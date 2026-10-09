@@ -69,6 +69,9 @@ export const metadata: Metadata = {
       "max-snippet": -1,
     },
   },
+  verification: {
+    google: "tWEvkmkjgFf7jh2Xzdo32tPV3D7E4hzTafwbXwbh4Go",
+  },
   openGraph: {
     title: "Studidex — Your Academic Life, Indexed",
     description:
