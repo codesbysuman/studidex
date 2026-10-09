@@ -116,12 +116,40 @@ export type Visibility =
 // Canonical Core Entities
 // ==========================================
 
+export type EducationStage = "school" | "hs" | "ug" | "pg";
+
+export type PaperCategory =
+    | "CC"      // Core Course
+    | "DSE"     // Discipline Specific Elective
+    | "SEC"     // Skill Enhancement Course (e.g. SEC-Panchayati Raj in Practice)
+    | "GE"      // Generic Elective
+    | "AEC"     // Ability Enhancement Course
+    | "Major"   // Major Paper
+    | "Minor"   // Minor Paper
+    | "Elective"// Elective Paper
+    | "General" // General Paper
+    | "Other";
+
+export interface AcademicPaper {
+    id: string;
+    name: string;
+    code?: string;
+    category?: PaperCategory;
+    semester?: string;
+    credits?: number;
+    subjectId?: SubjectId;
+}
+
 export interface Subject {
     id: SubjectId;
     name: string;
     code?: string;
     description?: string;
     createdAt?: ISODateTime;
+    paperCategory?: PaperCategory;
+    paperTitle?: string;
+    semester?: string;
+    credits?: number;
 }
 
 export interface Topic {
@@ -245,8 +273,28 @@ export interface Material {
     };
 }
 
+export interface UserProfile {
+    name: string;
+    stage?: EducationStage; // "school" | "hs" | "ug" | "pg"
+    className?: string; // Class / Grade / Semester (e.g. Class 10, Class 12, Semester 3)
+    examiningBody?: string; // Typeable affiliated examining body or university name (e.g. "University of Calcutta", "Delhi University", "CBSE")
+    board?: string; // Backwards-compatible alias for examiningBody
+    medium?: string; // Medium of instruction (e.g. English, Bengali, Hindi)
+    institutionName?: string; // Enrolled school / college / university / department / coaching name
+    center?: string; // Center, branch or campus location
+    degree?: string; // e.g. "B.A. (Hons)", "B.Sc", "B.Tech", "M.A.", "M.Sc"
+    stream?: string; // For HS/School: Science, Commerce, Humanities. For UG/PG: Discipline cluster
+    specialization?: string; // Major / Honours / Department / Track (e.g. "Political Science", "Artificial Intelligence")
+    minorSpecialization?: string; // Minor / Generic Elective (e.g. "Economics")
+    enrolledSubjectIds?: string[];
+    papers?: AcademicPaper[]; // Detailed paper-level specifications for UG/PG (e.g. SEC-Panchayati Raj in Practice)
+    customSubjects?: string[];
+    hasCompletedOnboarding?: boolean;
+}
+
 export interface StudidexState {
     version: number;
+    profile: UserProfile;
     subjects: Subject[];
     topics: Topic[];
     inputs: InputProvenance[];

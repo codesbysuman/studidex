@@ -4,6 +4,49 @@ import { StudidexState } from "./types";
 export const INITIAL_STUDIDEX_STATE: StudidexState = {
     version: 1,
     lastUpdated: "2026-10-08T14:00:00.000Z",
+    profile: {
+        name: "Alex",
+        stage: "ug",
+        className: "Semester 3",
+        degree: "B.A. (Hons)",
+        examiningBody: "University of Calcutta",
+        board: "University of Calcutta",
+        medium: "English",
+        institutionName: "Presidency University",
+        center: "Main Campus",
+        stream: "Humanities & Social Sciences",
+        specialization: "Political Science",
+        minorSpecialization: "Economics",
+        enrolledSubjectIds: [
+            "subj_political-science",
+            "subj_economics",
+            "subj_english",
+        ],
+        papers: [
+            {
+                id: "paper_cc5",
+                name: "CC-5: Comparative Politics & Government",
+                code: "POL-CC-301",
+                category: "CC",
+                semester: "Semester 3",
+            },
+            {
+                id: "paper_sec",
+                name: "SEC-1: Panchayati Raj in Practice",
+                code: "POL-SEC-A-1",
+                category: "SEC",
+                semester: "Semester 3",
+            },
+            {
+                id: "paper_ge3",
+                name: "GE-3: Introductory Macroeconomics",
+                code: "ECO-GE-301",
+                category: "GE",
+                semester: "Semester 3",
+            },
+        ],
+        hasCompletedOnboarding: false,
+    },
     subjects: [
         {
             id: "subj_political-science",

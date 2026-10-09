@@ -8,3 +8,4 @@ export * from "./validate";
 export * from "./normalize";
 export * from "./mutations";
 export * from "./selectors";
+export * from "./storage-adapter";

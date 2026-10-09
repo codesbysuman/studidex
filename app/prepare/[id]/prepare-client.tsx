@@ -53,7 +53,7 @@ export default function PreparationViewPage({ params }: { params: Promise<{ id: 
                         className="inline-flex items-center gap-1.5 text-[12px] font-medium text-foreground-muted hover:text-foreground"
                     >
                         <ArrowLeft size={14} />
-                        <span>Return to Command Center</span>
+                        <span>Return to Daily Overview</span>
                     </Link>
                 </div>
 

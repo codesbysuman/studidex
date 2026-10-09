@@ -1,7 +1,7 @@
 // app/add/page.tsx
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "motion/react";
 import {
@@ -157,6 +157,21 @@ export default function AddImportPage() {
         opportunities: number;
     }>({ events: 0, actions: 0, materials: 0, updates: 0, opportunities: 0 });
 
+    useEffect(() => {
+        if (typeof window !== "undefined") {
+            const pending = sessionStorage.getItem("studidex_pending_import");
+            if (pending) {
+                sessionStorage.removeItem("studidex_pending_import");
+                setJsonInput(pending);
+                const res = validateImportJson(pending);
+                setValidation(res);
+                if (res.valid && res.normalizedPayload) {
+                    setStep("preview");
+                }
+            }
+        }
+    }, []);
+
     const handleValidate = () => {
         const res = validateImportJson(jsonInput);
         setValidation(res);
@@ -207,7 +222,7 @@ export default function AddImportPage() {
                         Add / Import
                     </h1>
                     <p className="mt-2 text-[14px] text-foreground-muted">
-                        Give Studidex messy academic messages or AI-structured JSON. Studidex organizes it into your unified academic command center.
+                        Give Studidex messy academic messages or structured notes. Studidex organizes it into your personalized study space.
                     </p>
 
                     {/* Mode Tabs */}
@@ -557,7 +572,7 @@ export default function AddImportPage() {
                                     Successfully Added to Studidex
                                 </h2>
                                 <p className="mt-1 text-[14px] text-foreground-muted">
-                                    Your academic command center has updated across all views.
+                                    Your study dashboard has updated across all views.
                                 </p>
 
                                 <div className="mx-auto mt-6 flex max-w-sm flex-wrap justify-center gap-2 text-[12px]">

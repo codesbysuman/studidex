@@ -287,6 +287,7 @@ export function normalizeAndMerge(
 
     const mergedState: StudidexState = {
         version: 1,
+        profile: currentState.profile || { name: "Student" },
         subjects: existingSubjects,
         topics: existingTopics,
         inputs: existingInputs,

@@ -4,7 +4,7 @@ export default function manifest(): MetadataRoute.Manifest {
   return {
     name: "Studidex · Your Academic Life, Indexed",
     short_name: "Studidex",
-    description: "The unified academic operating system and command center. Track coursework, timetables, syllabus mastery, study actions, and exams.",
+    description: "The personal academic workspace and study index. Track coursework, timetables, syllabus mastery, study actions, and exams.",
     start_url: "/",
     display: "standalone",
     background_color: "#111111",

@@ -7,18 +7,19 @@ import {
     BookOpen,
     CalendarDays,
     CheckSquare,
-    House,
-    Plus,
+    Home,
     Settings,
+    User,
 } from "lucide-react";
 import { motion } from "motion/react";
 import { StudidexLogo } from "./logo";
+import { ThemeToggle } from "./theme-toggle";
 
 const navigation = [
     {
         label: "Home",
         href: "/",
-        icon: House,
+        icon: Home,
     },
     {
         label: "Plan",
@@ -116,33 +117,48 @@ export function Navigation() {
                     </div>
                 </nav>
 
-                {/* Secondary actions */}
-                <div className="px-3 pb-5">
-                    <div className="mb-3 h-px bg-border-subtle" />
+                {/* Secondary actions & Theme Switcher (Profile, Settings, Theme) */}
+                <div className="px-3 pb-5 space-y-1">
+                    <div className="h-px bg-border-subtle mb-2" />
 
-                    <Link href="/add" className="block">
+                    {/* Academic Profile */}
+                    <Link href="/profile" className="block">
                         <motion.div
                             whileHover={{ x: 2 }}
                             whileTap={{ scale: 0.98 }}
                             transition={spring}
-                            className="flex h-10 items-center gap-3 rounded-xl px-3 text-[13px] font-medium text-foreground-muted hover:bg-surface-subtle hover:text-foreground"
+                            className={`flex h-10 items-center gap-3 rounded-xl px-3 text-[13px] font-medium transition-colors ${
+                                pathname === "/profile"
+                                    ? "bg-surface text-foreground font-semibold shadow-2xs"
+                                    : "text-foreground-muted hover:bg-surface-subtle hover:text-foreground"
+                            }`}
                         >
-                            <Plus size={17} strokeWidth={1.8} />
-                            <span>Add / Import</span>
+                            <User size={17} strokeWidth={1.8} />
+                            <span>Profile</span>
                         </motion.div>
                     </Link>
 
+                    {/* App Settings */}
                     <Link href="/settings" className="block">
                         <motion.div
                             whileHover={{ x: 2 }}
                             whileTap={{ scale: 0.98 }}
                             transition={spring}
-                            className="flex h-10 items-center gap-3 rounded-xl px-3 text-[13px] font-medium text-foreground-muted hover:bg-surface-subtle hover:text-foreground"
+                            className={`flex h-10 items-center gap-3 rounded-xl px-3 text-[13px] font-medium transition-colors ${
+                                pathname === "/settings"
+                                    ? "bg-surface text-foreground font-semibold shadow-2xs"
+                                    : "text-foreground-muted hover:bg-surface-subtle hover:text-foreground"
+                            }`}
                         >
                             <Settings size={17} strokeWidth={1.8} />
                             <span>Settings</span>
                         </motion.div>
                     </Link>
+
+                    {/* 3-Theme Dropdown (Light / Dark / System) */}
+                    <div className="pt-1.5">
+                        <ThemeToggle variant="dropdown-button" />
+                    </div>
                 </div>
             </aside>
 

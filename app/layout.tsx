@@ -4,6 +4,8 @@ import "./globals.css";
 
 import Header from "@/components/header";
 import { Navigation } from "@/components/navigation";
+import { ThemeProvider } from "@wrksz/themes/next";
+import { RememberAiFab } from "@/components/remember-ai-fab";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -29,7 +31,7 @@ export const metadata: Metadata = {
     template: "%s | Studidex",
   },
   description:
-    "The unified academic operating system and command center. Track coursework, timetables, syllabus mastery, study actions, exam preparation, and updates in one connected index.",
+    "The personal academic workspace and study index. Track coursework, timetables, syllabus mastery, study actions, exam preparation, and updates in one connected space.",
   applicationName: "Studidex",
   authors: [{ name: "Studidex", url: siteUrl }],
   creator: "Studidex",
@@ -70,7 +72,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Studidex — Your Academic Life, Indexed",
     description:
-      "The unified academic operating system and command center. Connect your schedule, syllabus progress, and deadlines in one intuitive space.",
+      "The personal academic workspace and study index. Connect your schedule, syllabus progress, and deadlines in one intuitive space.",
     url: siteUrl,
     siteName: "Studidex",
     locale: "en_US",
@@ -80,7 +82,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Studidex — Your Academic Life, Indexed",
     description:
-      "The unified academic operating system and command center. Track coursework, timetables, syllabus mastery, study actions, and exams.",
+      "The personal academic workspace and study index. Track coursework, timetables, syllabus mastery, study actions, and exams.",
     creator: "@studidex",
   },
   icons: {
@@ -99,7 +101,7 @@ const jsonLd = {
   name: "Studidex",
   url: siteUrl,
   description:
-    "The unified academic operating system and command center. Track coursework, timetables, syllabus mastery, study actions, exam preparation, and updates in one connected index.",
+    "The personal academic workspace and study index. Track coursework, timetables, syllabus mastery, study actions, exam preparation, and updates in one connected space.",
   applicationCategory: "EducationalApplication",
   operatingSystem: "All",
   offers: {
@@ -108,7 +110,7 @@ const jsonLd = {
     priceCurrency: "USD",
   },
   featureList: [
-    "Academic Command Center Dashboard",
+    "Personal Academic Study Dashboard",
     "Syllabus and Module Mastery Progress",
     "Smart Weekly Agendas and Class Schedules",
     "Action Deliverables and Assignment Deadlines",
@@ -124,18 +126,25 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={inter.className}>
+    <html lang="en" suppressHydrationWarning className={inter.className}>
       <head>
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
       </head>
-      <body>
-        <Navigation />
-
-        <Header />
-        <div className="md:pl-55">{children}</div>
+      <body suppressHydrationWarning>
+        <ThemeProvider
+          attribute={["class", "data-theme"]}
+          storage="hybrid"
+          defaultTheme="system"
+          enableSystem
+        >
+          <Navigation />
+          <Header />
+          <div className="md:pl-55">{children}</div>
+          <RememberAiFab />
+        </ThemeProvider>
       </body>
     </html>
   );

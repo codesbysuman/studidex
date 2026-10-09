@@ -25,22 +25,26 @@ export function formatHumanDate(dateInput?: string | Date): string {
     if (!dateInput) return "";
     const d = typeof dateInput === "string" ? new Date(dateInput) : dateInput;
     if (isNaN(d.getTime())) return "";
-    return d.toLocaleDateString("en-US", {
-        weekday: "short",
-        day: "numeric",
-        month: "short",
-    });
+    return d
+        .toLocaleDateString("en-US", {
+            weekday: "short",
+            day: "numeric",
+            month: "short",
+        })
+        .replace(/[\u202f\u00a0]/g, " ");
 }
 
 export function formatTime(dateInput?: string | Date): string {
     if (!dateInput) return "";
     const d = typeof dateInput === "string" ? new Date(dateInput) : dateInput;
     if (isNaN(d.getTime())) return "";
-    return d.toLocaleTimeString("en-US", {
-        hour: "numeric",
-        minute: "2-digit",
-        hour12: true,
-    });
+    return d
+        .toLocaleTimeString("en-US", {
+            hour: "numeric",
+            minute: "2-digit",
+            hour12: true,
+        })
+        .replace(/[\u202f\u00a0]/g, " ");
 }
 
 /**

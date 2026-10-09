@@ -1,6 +1,6 @@
-// app/page.tsx
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { motion } from "motion/react";
 import {
@@ -17,13 +17,19 @@ import {
     AlertCircle,
     Award,
     ExternalLink,
+    User,
+    Edit3,
+    GraduationCap,
+    Building2,
+    Layers,
 } from "lucide-react";
 import { useStudidex } from "@/lib/use-studidex";
 import { getSmartHomeData, formatTime, formatHumanDate } from "@/lib/core";
 
 export default function HomePage() {
-    const { state, toggleAction } = useStudidex();
+    const { state, toggleAction, updateProfile } = useStudidex();
     const data = getSmartHomeData(state);
+    const profile = state.profile || { name: "Student", stage: "ug" };
 
     const hasTodayContent =
         data.todayClasses.length > 0 ||
@@ -31,21 +37,155 @@ export default function HomePage() {
         data.dueTodayActions.length > 0 ||
         data.overdueActions.length > 0;
 
+    const examiningBodyDisplay = profile.examiningBody || profile.board;
+
     return (
         <main className="min-h-screen px-5 pb-36 pt-8 md:px-12 md:pb-20 md:pt-14">
             <div className="mx-auto max-w-4xl space-y-12">
-                {/* Header Context */}
-                <header className="border-b border-border-subtle pb-6">
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-foreground-muted">
-                        {data.todayLabel}
-                    </p>
-                    <h1 className="mt-2 text-3xl font-semibold tracking-[-0.04em] text-foreground sm:text-4xl md:text-5xl">
-                        Command Center
-                    </h1>
-                    <p className="mt-1.5 text-[14px] text-foreground-muted">
-                        What matters to you right now, indexed and connected.
-                    </p>
+                {/* Header Context / Welcome */}
+                <header className="border-b border-border-subtle pb-6 space-y-4">
+                    <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
+                        <div>
+                            <div className="flex items-center gap-2">
+                                <span suppressHydrationWarning className="text-[11px] font-semibold uppercase tracking-[0.18em] text-foreground-muted">
+                                    {data.todayLabel}
+                                </span>
+                                <span className="inline-block h-1 w-1 rounded-full bg-foreground-muted" />
+                                <span className="text-[11px] font-medium text-foreground-muted">
+                                    Daily Overview
+                                </span>
+                            </div>
+
+                            <h1 className="mt-1.5 text-3xl font-semibold tracking-[-0.04em] text-foreground sm:text-4xl md:text-5xl">
+                                Hello, {profile.name || "Student"} 👋
+                            </h1>
+                            <p className="mt-1.5 text-[14px] text-foreground-muted">
+                                What matters to you right now, indexed and connected.
+                            </p>
+                        </div>
+
+                        {/* Personalize Profile Link Button */}
+                        {/* <Link
+                            href="/profile"
+                            className="inline-flex items-center gap-2 self-start rounded-xl border border-border bg-surface px-3.5 py-2 text-[12.5px] font-medium text-foreground shadow-xs hover:border-foreground hover:shadow-xs transition-all active:scale-98"
+                        >
+                            <div className="flex h-5 w-5 items-center justify-center rounded-full bg-foreground text-surface text-[10px] font-bold">
+                                {profile.name ? profile.name.charAt(0).toUpperCase() : "S"}
+                            </div>
+                            <span>Academic Profile</span>
+                            <Edit3 size={13} className="text-foreground-muted" />
+                        </Link> */}
+                    </div>
+
+                    {/* Quick Academic Profile Summary Pills */}
+                    <div className="flex flex-wrap items-center gap-2 pt-1 text-[12px]">
+                        {profile.stage && (
+                            <span className="rounded-lg bg-surface-subtle px-2 py-0.5 text-[11px] font-bold uppercase tracking-wider text-foreground">
+                                {profile.stage.toUpperCase()}
+                            </span>
+                        )}
+
+                        {profile.className && (
+                            <span className="inline-flex items-center gap-1.5 rounded-lg border border-border-subtle bg-surface px-2.5 py-1 text-foreground">
+                                <GraduationCap size={13} className="text-foreground-muted" />
+                                <span>{profile.className}</span>
+                            </span>
+                        )}
+
+                        {examiningBodyDisplay && (
+                            <span className="inline-flex items-center gap-1.5 rounded-lg border border-border-subtle bg-surface px-2.5 py-1 text-foreground">
+                                <span>{examiningBodyDisplay}</span>
+                            </span>
+                        )}
+
+                        {(profile.specialization || (profile.stream && profile.stream !== "General Foundation")) && (
+                            <span className="inline-flex items-center gap-1.5 rounded-lg border border-border-subtle bg-surface px-2.5 py-1 text-foreground">
+                                <Layers size={13} className="text-foreground-muted" />
+                                <span>
+                                    {profile.specialization || profile.stream?.split("—")[0].trim()}
+                                </span>
+                            </span>
+                        )}
+
+                        {profile.medium && (
+                            <span className="rounded-lg border border-border-subtle bg-surface px-2 py-1 text-foreground-muted">
+                                {profile.medium} Med.
+                            </span>
+                        )}
+
+                        {(profile.institutionName || profile.center) && (
+                            <span className="inline-flex items-center gap-1.5 rounded-lg border border-border-subtle bg-surface px-2.5 py-1 text-foreground-muted">
+                                <Building2 size={13} className="text-foreground-muted" />
+                                <span>
+                                    {profile.institutionName}
+                                    {profile.center ? ` (${profile.center})` : ""}
+                                </span>
+                            </span>
+                        )}
+
+                        {profile.papers && profile.papers.length > 0 ? (
+                            <Link
+                                href="/profile"
+                                className="inline-flex items-center gap-1 rounded-lg bg-inverse text-inverse-foreground px-2.5 py-1 text-[11.5px] font-medium hover:opacity-90 transition-opacity"
+                            >
+                                <BookOpen size={12} />
+                                <span>{profile.papers.length} Papers</span>
+                            </Link>
+                        ) : profile.enrolledSubjectIds && profile.enrolledSubjectIds.length > 0 ? (
+                            <Link
+                                href="/profile"
+                                className="inline-flex items-center gap-1 rounded-lg bg-surface-subtle px-2.5 py-1 text-[11.5px] font-medium text-foreground-muted hover:text-foreground transition-colors"
+                            >
+                                <BookOpen size={12} />
+                                <span>{profile.enrolledSubjectIds.length} Subjects</span>
+                            </Link>
+                        ) : null}
+                    </div>
                 </header>
+
+                {/* First-Time User Personalization Card */}
+                {!profile.hasCompletedOnboarding && (
+                    <motion.section
+                        initial={{ opacity: 0, y: 8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="relative overflow-hidden rounded-2xl border border-border bg-surface p-5 sm:p-6 shadow-xs"
+                    >
+                        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-5">
+                            <div className="space-y-1.5 max-w-xl">
+                                <div className="flex items-center gap-2">
+                                    <span className="inline-flex items-center gap-1.5 rounded-full bg-foreground px-2.5 py-0.5 text-[11px] font-semibold text-surface">
+                                        <Sparkles size={11} /> First-Time Setup
+                                    </span>
+                                    <span className="text-[12px] font-medium text-foreground-muted">
+                                        Tailor Studidex to your studies
+                                    </span>
+                                </div>
+                                <h3 className="text-lg font-semibold tracking-tight text-foreground sm:text-xl">
+                                    Personalize your academic workspace
+                                </h3>
+                                <p className="text-[13px] text-foreground-muted leading-relaxed">
+                                    Configure your stage (School, HS, College UG / PG), examining board or university, and your active semester papers (Core, SEC, DSE) so your schedule, exams, and materials are completely tailored to you.
+                                </p>
+                            </div>
+                            <div className="flex flex-wrap sm:flex-nowrap items-center gap-2.5 shrink-0 w-full sm:w-auto">
+                                <Link
+                                    href="/profile"
+                                    className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 rounded-xl bg-foreground px-4 py-2.5 text-[13px] font-medium text-surface shadow-xs hover:opacity-90 active:scale-98 transition-all"
+                                >
+                                    <span>Personalize Profile</span>
+                                    <ArrowRight size={14} />
+                                </Link>
+                                <button
+                                    onClick={() => updateProfile({ hasCompletedOnboarding: true })}
+                                    title="Dismiss setup"
+                                    className="rounded-xl border border-border px-3 py-2.5 text-[12.5px] font-medium text-foreground-muted hover:text-foreground hover:bg-surface-subtle transition-colors"
+                                >
+                                    Dismiss
+                                </button>
+                            </div>
+                        </div>
+                    </motion.section>
+                )}
 
                 {/* Overdue Alert if any */}
                 {data.overdueActions.length > 0 && (

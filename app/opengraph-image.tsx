@@ -129,7 +129,7 @@ export default async function Image() {
                 background: "#10b981",
               }}
             />
-            Academic Command Center
+            Personal Study Workspace
           </div>
         </div>
 

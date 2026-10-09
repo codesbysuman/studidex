@@ -1,8 +1,9 @@
 // lib/use-studidex.ts
 "use client";
 
-import { useEffect, useState, useSyncExternalStore } from "react";
+import { useSyncExternalStore } from "react";
 import {
+    INITIAL_STUDIDEX_STATE,
     clearAllState,
     deleteItem,
     deleteMaterial,
@@ -15,82 +16,99 @@ import {
     toggleActionStatus,
     updateItem,
     updateTopicProgress,
-    StudidexState,
+    updateUserProfile,
+    UserProfile,
+    AcademicPaper,
     MockTestAttempt,
     ExternalImportEnvelope,
     NormalizedImportResult,
 } from "./core";
 
+const emptySubscribe = () => () => {};
+const getClientHydrated = () => true;
+const getServerHydrated = () => false;
+const getServerSnapshot = () => INITIAL_STUDIDEX_STATE;
+
 /**
- * React hook to synchronize state across client views
+ * React hook to synchronize state across client views without hydration mismatch
  */
 export function useStudidex() {
-    const [state, setState] = useState<StudidexState>(getStoredState);
+    const isHydrated = useSyncExternalStore(
+        emptySubscribe,
+        getClientHydrated,
+        getServerHydrated
+    );
 
-    useEffect(() => {
-        // Hydrate from storage on mount
-        setState(getStoredState());
-        const unsubscribe = subscribeToState((newState) => {
-            setState(newState);
-        });
-        return unsubscribe;
-    }, []);
+    const state = useSyncExternalStore(
+        subscribeToState,
+        getStoredState,
+        getServerSnapshot
+    );
 
     const toggleAction = (actionId: string) => {
-        const next = toggleActionStatus(state, actionId);
+        const current = getStoredState();
+        const next = toggleActionStatus(current, actionId);
         saveStoredState(next);
-        setState(next);
     };
 
     const importEnvelope = (envelope: ExternalImportEnvelope): NormalizedImportResult => {
-        const { result, nextState } = mergeImportEnvelope(state, envelope);
+        const current = getStoredState();
+        const { result, nextState } = mergeImportEnvelope(current, envelope);
         saveStoredState(nextState);
-        setState(nextState);
         return result;
     };
 
     const modifyItem = (id: string, updates: Parameters<typeof updateItem>[2]) => {
-        const next = updateItem(state, id, updates);
+        const current = getStoredState();
+        const next = updateItem(current, id, updates);
         saveStoredState(next);
-        setState(next);
     };
 
     const removeItem = (id: string) => {
-        const next = deleteItem(state, id);
+        const current = getStoredState();
+        const next = deleteItem(current, id);
         saveStoredState(next);
-        setState(next);
     };
 
     const removeMaterial = (id: string) => {
-        const next = deleteMaterial(state, id);
+        const current = getStoredState();
+        const next = deleteMaterial(current, id);
         saveStoredState(next);
-        setState(next);
     };
 
     const saveTestAttempt = (materialId: string, attempt: MockTestAttempt) => {
-        const next = recordTestAttempt(state, materialId, attempt);
+        const current = getStoredState();
+        const next = recordTestAttempt(current, materialId, attempt);
         saveStoredState(next);
-        setState(next);
     };
 
     const setTopicProgress = (topicId: string, progress: number) => {
-        const next = updateTopicProgress(state, topicId, progress);
+        const current = getStoredState();
+        const next = updateTopicProgress(current, topicId, progress);
         saveStoredState(next);
-        setState(next);
+    };
+
+    const updateProfile = (
+        profile: Partial<UserProfile>,
+        additionalSubjectNames?: string[],
+        additionalPapers?: AcademicPaper[]
+    ) => {
+        const current = getStoredState();
+        const next = updateUserProfile(current, profile, additionalSubjectNames, additionalPapers);
+        saveStoredState(next);
     };
 
     const resetSample = () => {
-        const next = resetStateToSample();
-        setState(next);
+        resetStateToSample();
     };
 
     const clearAll = () => {
-        const next = clearAllState();
-        setState(next);
+        clearAllState();
     };
 
     return {
         state,
+        isHydrated,
         toggleAction,
         importEnvelope,
         modifyItem,
@@ -98,6 +116,7 @@ export function useStudidex() {
         removeMaterial,
         saveTestAttempt,
         setTopicProgress,
+        updateProfile,
         resetSample,
         clearAll,
     };

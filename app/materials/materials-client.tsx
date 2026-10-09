@@ -14,9 +14,12 @@ import {
     Layers,
     GraduationCap,
     Clock,
+    ChevronDown,
+    X,
 } from "lucide-react";
 import { useStudidex } from "@/lib/use-studidex";
 import { categorizeMaterials, Material } from "@/lib/core";
+import { CustomSelect } from "@/components/ui/custom-select";
 
 export default function MaterialsPage() {
     const { state } = useStudidex();
@@ -137,64 +140,85 @@ export default function MaterialsPage() {
                         </div>
                     </div>
 
-                    {/* Subject Filter Pills */}
-                    <div className="mt-5 flex flex-wrap items-center gap-2">
-                        <span className="text-[11px] font-semibold uppercase tracking-wider text-foreground-muted mr-1">
-                            Subjects:
-                        </span>
-                        <button
-                            onClick={() => setSelectedSubjectId("all")}
-                            className={`rounded-lg px-3 py-1 text-[12px] font-medium transition-colors ${
-                                selectedSubjectId === "all"
-                                    ? "bg-foreground text-surface"
-                                    : "border border-border-subtle bg-surface text-foreground-muted hover:text-foreground"
-                            }`}
-                        >
-                            All ({state.materials.length})
-                        </button>
-                        {state.subjects.map((s) => {
-                            const count = state.materials.filter((m) => m.subjectId === s.id).length;
-                            return (
-                                <button
-                                    key={s.id}
-                                    onClick={() => setSelectedSubjectId(s.id)}
-                                    className={`rounded-lg px-3 py-1 text-[12px] font-medium transition-colors ${
-                                        selectedSubjectId === s.id
-                                            ? "bg-foreground text-surface"
-                                            : "border border-border-subtle bg-surface text-foreground-muted hover:text-foreground"
-                                    }`}
-                                >
-                                    {s.name} ({count})
-                                </button>
-                            );
-                        })}
-                    </div>
+                    {/* Compact Filter Dropdowns (Eliminates mobile clutter) */}
+                    <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                        <div className="grid grid-cols-2 gap-2.5 sm:flex sm:items-center sm:gap-3">
+                            {/* Subject Custom Select Filter */}
+                            <CustomSelect
+                                value={selectedSubjectId}
+                                onChange={setSelectedSubjectId}
+                                icon={<BookOpen size={14} />}
+                                className="sm:w-auto sm:min-w-44"
+                                options={[
+                                    {
+                                        value: "all",
+                                        label: `All Subjects (${state.materials.length})`,
+                                    },
+                                    ...state.subjects.map((s) => ({
+                                        value: s.id,
+                                        label: s.name,
+                                        badge: `${state.materials.filter((m) => m.subjectId === s.id).length}`,
+                                    })),
+                                ]}
+                            />
 
-                    {/* Category Filter Pills */}
-                    <div className="mt-2.5 flex flex-wrap items-center gap-2">
-                        <span className="text-[11px] font-semibold uppercase tracking-wider text-foreground-muted mr-1">
-                            Format:
-                        </span>
-                        {[
-                            { key: "all", label: "All Formats" },
-                            { key: "your_notes", label: `Your Notes (${categories.yourNotes.length})` },
-                            { key: "our_notes", label: `Handouts & Notes (${categories.ourNotes.length})` },
-                            { key: "mock_test", label: `Mock Tests (${categories.mockTests.length})` },
-                            { key: "pyq", label: `PYQs (${categories.pyqs.length})` },
-                            { key: "syllabus", label: `Syllabus (${categories.syllabus.length})` },
-                        ].map((cat) => (
-                            <button
-                                key={cat.key}
-                                onClick={() => setSelectedCategory(cat.key)}
-                                className={`rounded-lg px-2.5 py-0.5 text-[11.5px] font-medium transition-colors ${
-                                    selectedCategory === cat.key
-                                        ? "bg-inverse text-inverse-foreground"
-                                        : "bg-surface-subtle text-foreground-muted hover:text-foreground"
-                                }`}
-                            >
-                                {cat.label}
-                            </button>
-                        ))}
+                            {/* Format / Category Custom Select Filter */}
+                            <CustomSelect
+                                value={selectedCategory}
+                                onChange={setSelectedCategory}
+                                icon={<Layers size={14} />}
+                                className="sm:w-auto sm:min-w-44"
+                                options={[
+                                    { value: "all", label: "All Formats" },
+                                    {
+                                        value: "your_notes",
+                                        label: "Your Notes",
+                                        badge: `${categories.yourNotes.length}`,
+                                    },
+                                    {
+                                        value: "our_notes",
+                                        label: "Handouts & Notes",
+                                        badge: `${categories.ourNotes.length}`,
+                                    },
+                                    {
+                                        value: "mock_test",
+                                        label: "Mock Tests",
+                                        badge: `${categories.mockTests.length}`,
+                                    },
+                                    {
+                                        value: "pyq",
+                                        label: "Past Papers (PYQs)",
+                                        badge: `${categories.pyqs.length}`,
+                                    },
+                                    {
+                                        value: "syllabus",
+                                        label: "Syllabi",
+                                        badge: `${categories.syllabus.length}`,
+                                    },
+                                ]}
+                            />
+                        </div>
+
+                        {/* Active Filter Counter & Quick Reset */}
+                        <div className="flex items-center justify-between sm:justify-end gap-3 text-[12px] text-foreground-muted">
+                            <span>
+                                Showing <strong className="text-foreground">{filteredMaterials.length}</strong> of {state.materials.length}
+                            </span>
+
+                            {(selectedSubjectId !== "all" || selectedCategory !== "all" || searchQuery.trim() !== "") && (
+                                <button
+                                    onClick={() => {
+                                        setSelectedSubjectId("all");
+                                        setSelectedCategory("all");
+                                        setSearchQuery("");
+                                    }}
+                                    className="inline-flex items-center gap-1 rounded-lg bg-surface-subtle px-2 py-1 text-[11.5px] font-medium text-foreground hover:bg-foreground hover:text-surface transition-colors"
+                                >
+                                    <X size={12} />
+                                    <span>Reset</span>
+                                </button>
+                            )}
+                        </div>
                     </div>
                 </header>
 

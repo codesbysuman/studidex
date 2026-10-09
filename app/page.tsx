@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import HomePageClient from "./home-client";
 
 export const metadata: Metadata = {
-  title: "Command Center — Real-Time Academic Overview",
+  title: "Daily Overview — Personal Study Dashboard",
   description:
-    "Your academic command center. Real-time overview of today's schedule, pending assignments, preparation drills, and urgent updates.",
+    "Your daily overview and personal study dashboard. Real-time view of today's schedule, pending assignments, preparation drills, and academic updates.",
   alternates: {
     canonical: "/",
   },

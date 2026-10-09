@@ -15,7 +15,7 @@ export function slugify(text: string): string {
 /**
  * Generate a clean, typed ID for Studidex entities
  */
-export function generateId(prefix: "subj" | "top" | "inp" | "item" | "mat" | "att" = "item"): string {
+export function generateId(prefix: "subj" | "top" | "inp" | "item" | "mat" | "att" | "paper" = "item"): string {
     const timestamp = Date.now().toString(36);
     const randomPart = Math.random().toString(36).substring(2, 8);
     return `${prefix}_${timestamp}${randomPart}`;
