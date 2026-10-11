@@ -1,0 +1,163 @@
+// prisma/schema.prisma
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id                     String           @id @default(cuid())
+  email                  String           @unique
+  passwordHash           String
+  name                   String?
+  stage                  String?          @default("ug")
+  className              String?
+  degree                 String?
+  examiningBody          String?
+  board                  String?
+  medium                 String?          @default("English")
+  institutionName        String?
+  center                 String?
+  stream                 String?
+  specialization         String?
+  minorSpecialization    String?
+  hasCompletedOnboarding Boolean          @default(false)
+  papers                 Json?            @default("[]")
+  createdAt              DateTime         @default(now())
+  updatedAt              DateTime         @updatedAt
+
+  subjects               Subject[]
+  topics                 Topic[]
+  items                  AcademicItem[]
+  materials              Material[]
+  testAttempts           MockTestAttempt[]
+  academicInputs         AcademicInput[]
+
+  @@map("users")
+}
+
+model Subject {
+  id          String         @id @default(cuid())
+  userId      String
+  name        String
+  code        String?
+  description String?
+  color       String?
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  user        User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  topics      Topic[]
+  items       AcademicItem[]
+  materials   Material[]
+
+  @@index([userId])
+  @@map("subjects")
+}
+
+model Topic {
+  id          String    @id @default(cuid())
+  userId      String
+  subjectId   String
+  name        String
+  unit        String?
+  progress    Float     @default(0)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  subject     Subject   @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([subjectId])
+  @@map("topics")
+}
+
+model AcademicItem {
+  id                 String    @id @default(cuid())
+  userId             String
+  subjectId          String?
+  type               String    // "event" | "action" | "update" | "opportunity"
+  eventType          String?   // "class" | "exam" | "test" | "deadline" | "submission"
+  actionType         String?   // "assignment" | "study" | "preparation" | "submission" | "application"
+  title              String
+  description        String?
+  startAt            DateTime?
+  endAt              DateTime?
+  dueAt              DateTime?
+  priority           String    @default("normal") // "low" | "normal" | "high" | "urgent"
+  status             String    @default("pending") // "pending" | "in_progress" | "completed" | "archived" | "cancelled"
+  metadata           Json?     // checklist, room, marks, url, etc.
+  topicIds           Json?     @default("[]")
+  preparesForItemId  String?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  user               User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  subject            Subject?  @relation(fields: [subjectId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([subjectId])
+  @@map("academic_items")
+}
+
+model Material {
+  id          String            @id @default(cuid())
+  userId      String
+  subjectId   String?
+  type        String            // "note" | "pdf" | "document" | "syllabus" | "pyq" | "mock_test" | "handout"
+  origin      String            @default("personal") // "personal" | "teacher" | "college" | "library" | "system"
+  title       String
+  description String?
+  content     String?           @db.Text
+  testData    Json?             // durationMinutes, totalMarks, questions
+  metadata    Json?             // year, semester, marks, externalUrl
+  topicIds    Json?             @default("[]")
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  user        User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  subject     Subject?          @relation(fields: [subjectId], references: [id], onDelete: SetNull)
+  attempts    MockTestAttempt[]
+
+  @@index([userId])
+  @@index([subjectId])
+  @@map("materials")
+}
+
+model MockTestAttempt {
+  id               String    @id @default(cuid())
+  userId           String
+  materialId       String
+  score            Float
+  totalMarks       Float
+  timeSpentSeconds Int?
+  selectedAnswers  Json?
+  timestamp        DateTime  @default(now())
+  createdAt        DateTime  @default(now())
+
+  user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  material         Material  @relation(fields: [materialId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([materialId])
+  @@map("mock_test_attempts")
+}
+
+model AcademicInput {
+  id         String   @id @default(cuid())
+  userId     String
+  type       String   @default("message") // "message" | "file" | "syllabus"
+  sourceName String?
+  sourceType String?  @default("department")
+  content    String   @db.Text
+  createdAt  DateTime @default(now())
+
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("academic_inputs")
+}

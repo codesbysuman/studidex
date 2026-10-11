@@ -42,6 +42,40 @@ export default function MaterialDetailPage({ params }: { params: Promise<{ id: s
         (material.testData?.durationMinutes || 20) * 60
     );
 
+    // AI Summarizer State
+    const [aiSummaryLoading, setAiSummaryLoading] = useState(false);
+    const [aiSummaryData, setAiSummaryData] = useState<any | null>(null);
+    const [aiSummaryError, setAiSummaryError] = useState<string | null>(null);
+
+    const handleSummarizeWithAi = async () => {
+        if (!material.content && !material.description) return;
+        setAiSummaryLoading(true);
+        setAiSummaryError(null);
+
+        try {
+            const res = await fetch("/api/ai/summarize", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    title: material.title,
+                    subject: subject?.name,
+                    content: material.content || material.description,
+                }),
+            });
+
+            const data = await res.json();
+            if (!res.ok) {
+                throw new Error(data.error || "Failed to summarize material.");
+            }
+
+            setAiSummaryData(data.summary);
+        } catch (err: any) {
+            setAiSummaryError(err?.message || "Failed to summarize material.");
+        } finally {
+            setAiSummaryLoading(false);
+        }
+    };
+
     // Countdown timer
     useEffect(() => {
         if (testMode !== "taking") return;
@@ -120,7 +154,29 @@ export default function MaterialDetailPage({ params }: { params: Promise<{ id: s
                 <header className="border-b border-border-subtle pb-6">
                     <div className="flex flex-wrap items-center gap-2">
                         <span className="rounded bg-surface-subtle px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-foreground-muted">
-                            {material.origin} · {material.type}
+                            {material.origin === "personal"
+                                ? "My Notes"
+                                : material.origin === "teacher"
+                                ? "Faculty"
+                                : material.origin === "college"
+                                ? "Dept"
+                                : "Curated"}{" "}
+                            ·{" "}
+                            {material.type === "mock_test"
+                                ? "Practice Quiz"
+                                : material.type === "pyq"
+                                ? "Past Paper"
+                                : material.type === "sample_paper"
+                                ? "Sample Paper"
+                                : material.type === "syllabus"
+                                ? "Syllabus"
+                                : material.type === "handout"
+                                ? "Handout"
+                                : material.type === "reference"
+                                ? "Reference"
+                                : material.type === "pdf" || material.type === "document"
+                                ? "Document"
+                                : "Study Note"}
                         </span>
                         {subject && (
                             <Link
@@ -411,6 +467,92 @@ export default function MaterialDetailPage({ params }: { params: Promise<{ id: s
                 {/* ==================================================== */}
                 {!isMockTest && (
                     <article className="rounded-2xl border border-border bg-surface p-6 sm:p-8 space-y-6">
+                        {/* AI Summary Action Header */}
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border-subtle pb-4">
+                            <div>
+                                <h2 className="text-[14px] font-semibold text-foreground">
+                                    Document Reading Space
+                                </h2>
+                                <p className="text-[12px] text-foreground-muted">
+                                    Original notes and study reference
+                                </p>
+                            </div>
+
+                            <button
+                                type="button"
+                                onClick={handleSummarizeWithAi}
+                                disabled={aiSummaryLoading || (!material.content && !material.description)}
+                                className="inline-flex items-center gap-1.5 self-start sm:self-auto rounded-xl border border-border bg-surface px-3 py-1.5 text-[12px] font-semibold text-foreground hover:bg-surface-subtle shadow-2xs transition-all active:scale-98 disabled:opacity-50"
+                            >
+                                <Sparkles size={13} />
+                                <span>{aiSummaryLoading ? "Analyzing Notes..." : "AI Key Concepts & Summary"}</span>
+                            </button>
+                        </div>
+
+                        {aiSummaryError && (
+                            <div className="rounded-xl border border-red-500/20 bg-red-500/5 p-3 text-[12px] text-red-600 dark:text-red-400">
+                                {aiSummaryError}
+                            </div>
+                        )}
+
+                        {/* AI Summary Box */}
+                        {aiSummaryData && (
+                            <div className="rounded-xl border border-border bg-surface-subtle/40 p-5 space-y-4">
+                                <div className="flex items-center gap-2">
+                                    <Sparkles size={15} />
+                                    <h3 className="text-[13.5px] font-semibold text-foreground">
+                                        AI Executive Summary & High-Yield Takeaways
+                                    </h3>
+                                </div>
+
+                                <p className="text-[13px] leading-relaxed text-foreground-secondary">
+                                    {aiSummaryData.summary}
+                                </p>
+
+                                {aiSummaryData.keyTakeaways?.length > 0 && (
+                                    <div className="space-y-1.5 pt-1">
+                                        <h4 className="text-[11.5px] font-semibold uppercase tracking-wider text-foreground-muted">
+                                            Key Takeaways:
+                                        </h4>
+                                        <ul className="list-disc pl-5 space-y-1 text-[12.5px] text-foreground">
+                                            {aiSummaryData.keyTakeaways.map((item: string, idx: number) => (
+                                                <li key={idx}>{item}</li>
+                                            ))}
+                                        </ul>
+                                    </div>
+                                )}
+
+                                {aiSummaryData.highYieldFormulasOrTerms?.length > 0 && (
+                                    <div className="space-y-1.5 pt-1">
+                                        <h4 className="text-[11.5px] font-semibold uppercase tracking-wider text-foreground-muted">
+                                            Definitions & Formulas:
+                                        </h4>
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                            {aiSummaryData.highYieldFormulasOrTerms.map((t: any, idx: number) => (
+                                                <div key={idx} className="rounded-lg border border-border-subtle bg-surface p-2.5 text-[12px]">
+                                                    <span className="font-semibold text-foreground">{t.term}: </span>
+                                                    <span className="text-foreground-muted">{t.definition}</span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {aiSummaryData.sampleExamQuestions?.length > 0 && (
+                                    <div className="space-y-1.5 pt-1">
+                                        <h4 className="text-[11.5px] font-semibold uppercase tracking-wider text-foreground-muted">
+                                            Anticipated Exam Questions:
+                                        </h4>
+                                        <div className="space-y-1 text-[12px] text-foreground-muted">
+                                            {aiSummaryData.sampleExamQuestions.map((q: string, idx: number) => (
+                                                <p key={idx}>• {q}</p>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
                         {material.content ? (
                             <div className="prose prose-neutral dark:prose-invert max-w-none text-[14px] leading-relaxed whitespace-pre-wrap font-sans">
                                 {material.content}

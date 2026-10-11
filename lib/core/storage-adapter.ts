@@ -59,10 +59,7 @@ export class LocalStorageAdapter implements StorageAdapter {
                 profile: {
                     ...INITIAL_STUDIDEX_STATE.profile,
                     ...(parsed.profile || {}),
-                    papers:
-                        parsed.profile?.papers && parsed.profile.papers.length > 0
-                            ? parsed.profile.papers
-                            : INITIAL_STUDIDEX_STATE.profile?.papers || [],
+                    papers: parsed.profile?.papers || [],
                 },
             } as StudidexState;
         } catch (e) {

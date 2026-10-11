@@ -8,7 +8,6 @@ import {
     ArrowLeft,
     Check,
     Copy,
-    Database,
     Download,
     RefreshCw,
     Sliders,
@@ -23,15 +22,19 @@ import {
     ShieldCheck,
     HardDrive,
     Sun,
+    LogIn,
+    LogOut,
 } from "lucide-react";
 import { useStudidex } from "@/lib/use-studidex";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { AuthModal } from "@/components/auth-modal";
 
 export default function SettingsPage() {
-    const { state, resetSample, clearAll } = useStudidex();
+    const { state, clearAll, user, isAuthenticated, logout, syncWithCloud, isSyncing, isDbConnected } = useStudidex();
+    const [isAuthOpen, setIsAuthOpen] = useState(false);
     const [copied, setCopied] = useState(false);
     const [actionMessage, setActionMessage] = useState<string | null>(null);
-    const profile = state.profile || { name: "Student" };
+    const profile = state.profile || { name: "" };
 
     const handleCopyBackup = () => {
         navigator.clipboard.writeText(JSON.stringify(state, null, 2));
@@ -49,18 +52,10 @@ export default function SettingsPage() {
         URL.revokeObjectURL(url);
     };
 
-    const handleReset = () => {
-        if (confirm("Reset Studidex back to default academic demonstration dataset?")) {
-            resetSample();
-            setActionMessage("Reset to demo dataset successfully.");
-            setTimeout(() => setActionMessage(null), 3000);
-        }
-    };
-
     const handleClear = () => {
-        if (confirm("Clear all data in Studidex? This will erase all local items.")) {
+        if (confirm("Clear all items and notes? This will give you a clean slate.")) {
             clearAll();
-            setActionMessage("Cleared all local data.");
+            setActionMessage("All local items cleared.");
             setTimeout(() => setActionMessage(null), 3000);
         }
     };
@@ -133,7 +128,7 @@ export default function SettingsPage() {
                     </div>
                 </section>
 
-                {/* Appearance & Theme (3-Theme System) */}
+                {/* Appearance & Theme */}
                 <section className="rounded-2xl border border-border bg-surface p-6 space-y-4">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
@@ -143,12 +138,12 @@ export default function SettingsPage() {
                             </h2>
                         </div>
                         <span className="text-[11.5px] text-foreground-muted">
-                            Powered by @wrksz/themes
+                            Auto-saved preference
                         </span>
                     </div>
 
                     <p className="text-[13px] text-foreground-muted leading-relaxed">
-                        Customize your visual experience across light, dark, and system modes. Server-side caching prevents any flash of wrong theme on page load.
+                        Choose your preferred appearance across light, dark, and system modes.
                     </p>
 
                     <div className="max-w-md pt-1">
@@ -160,13 +155,13 @@ export default function SettingsPage() {
                 <section className="rounded-2xl border border-border bg-surface p-6 space-y-4">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
-                            <Database size={17} className="text-foreground-muted" />
+                            <BookOpen size={17} className="text-foreground-muted" />
                             <h2 className="text-[15px] font-semibold text-foreground">
                                 Local Study Library
                             </h2>
                         </div>
                         <span className="text-[11.5px] text-foreground-muted">
-                            Offline-ready on your device
+                            Saved safely on this device
                         </span>
                     </div>
 
@@ -199,45 +194,85 @@ export default function SettingsPage() {
                             <span className="font-mono text-xl font-bold text-foreground">
                                 {state.inputs.length}
                             </span>
-                            <p className="text-[11px] text-foreground-muted">Imported Sources</p>
+                            <p className="text-[11px] text-foreground-muted">Saved Sources</p>
                         </div>
                     </div>
                 </section>
 
-                {/* Storage Architecture & Sync Readiness */}
+                <AuthModal isOpen={isAuthOpen} onClose={() => setIsAuthOpen(false)} />
+
+                {/* Cloud Sync & Student Account */}
                 <section className="rounded-2xl border border-border bg-surface p-6 space-y-4">
-                    <div className="flex items-center justify-between">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                         <div className="flex items-center gap-2">
-                            <ShieldCheck size={17} className="text-foreground-muted" />
+                            <Cloud size={17} className="text-foreground-muted" />
                             <h2 className="text-[15px] font-semibold text-foreground">
-                                Storage & Sync Status
+                                Cloud Sync & Student Account
                             </h2>
                         </div>
                         <span className="inline-flex items-center gap-1.5 rounded-full bg-green-500/10 px-2.5 py-0.5 text-[11px] font-semibold text-green-700 dark:text-green-300">
                             <span className="h-1.5 w-1.5 rounded-full bg-green-500 animate-pulse" />
-                            Offline Active
+                            {isAuthenticated ? "Cloud Synced" : "Saved Locally on Device"}
                         </span>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-[13px]">
-                        <div className="rounded-xl border border-border-subtle bg-surface-subtle/30 p-3.5 space-y-1">
-                            <div className="flex items-center gap-2">
-                                <HardDrive size={14} className="text-foreground-muted" />
-                                <span className="font-semibold text-foreground">Local Browser Storage</span>
+                    <div className="rounded-xl border border-border-subtle bg-surface-subtle/30 p-4 space-y-3">
+                        {isAuthenticated && user ? (
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                                <div>
+                                    <p className="text-[11.5px] uppercase tracking-wider font-semibold text-foreground-muted">
+                                        Connected Student Account
+                                    </p>
+                                    <p className="text-[14px] font-semibold text-foreground">
+                                        {user.name || "Student"} <span className="text-foreground-muted font-normal">({user.email})</span>
+                                    </p>
+                                    <p className="text-[12px] text-foreground-muted">
+                                        {user.className ? `${user.className} · ` : ""}{user.institutionName || "Personal Space"}
+                                    </p>
+                                </div>
+
+                                <div className="flex items-center gap-2">
+                                    <button
+                                        type="button"
+                                        onClick={syncWithCloud}
+                                        disabled={isSyncing}
+                                        className="inline-flex items-center gap-1.5 rounded-xl border border-border bg-surface px-3.5 py-2 text-[12.5px] font-medium text-foreground hover:bg-surface-subtle shadow-2xs transition-colors disabled:opacity-50"
+                                    >
+                                        <RefreshCw size={13} className={isSyncing ? "animate-spin" : ""} />
+                                        <span>{isSyncing ? "Syncing..." : "Sync Now"}</span>
+                                    </button>
+
+                                    <button
+                                        type="button"
+                                        onClick={logout}
+                                        className="inline-flex items-center gap-1.5 rounded-xl border border-border bg-surface px-3 py-2 text-[12.5px] font-medium text-red-600 dark:text-red-400 hover:bg-red-500/5 transition-colors"
+                                    >
+                                        <LogOut size={13} />
+                                        <span>Sign Out</span>
+                                    </button>
+                                </div>
                             </div>
-                            <p className="text-[12px] text-foreground-muted leading-relaxed">
-                                Fully functional offline. Data is persisted locally with automatic backup snapshots to ensure zero data loss.
-                            </p>
-                        </div>
-                        <div className="rounded-xl border border-border-subtle bg-surface-subtle/30 p-3.5 space-y-1">
-                            <div className="flex items-center gap-2">
-                                <Cloud size={14} className="text-foreground-muted" />
-                                <span className="font-semibold text-foreground">Cloud Sync Adapter</span>
+                        ) : (
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                                <div>
+                                    <p className="text-[13.5px] font-semibold text-foreground">
+                                        Sync Across Your Devices
+                                    </p>
+                                    <p className="text-[12px] text-foreground-muted">
+                                        Sign in or create an account to access your notes, assignments, and exam schedule across your phone, tablet, and laptop.
+                                    </p>
+                                </div>
+
+                                <button
+                                    type="button"
+                                    onClick={() => setIsAuthOpen(true)}
+                                    className="inline-flex items-center gap-2 rounded-xl bg-foreground px-4 py-2 text-[12.5px] font-semibold text-surface shadow-xs hover:opacity-90 transition-opacity"
+                                >
+                                    <LogIn size={14} />
+                                    <span>Sign In or Register</span>
+                                </button>
                             </div>
-                            <p className="text-[12px] text-foreground-muted leading-relaxed">
-                                Pluggable storage adapter initialized. Ready to sync with backend server or remote database when connected.
-                            </p>
-                        </div>
+                        )}
                     </div>
                 </section>
 
@@ -247,7 +282,7 @@ export default function SettingsPage() {
                         Export & Backups
                     </h2>
                     <p className="text-[13px] text-foreground-muted leading-relaxed">
-                        Export your complete academic space as a single JSON file anytime. Keep your files safe or transfer them between devices easily.
+                        Export your complete academic space as a single backup file anytime. Keep your files safe or transfer them between devices easily.
                     </p>
 
                     <div className="flex flex-wrap gap-3 pt-2">
@@ -270,28 +305,25 @@ export default function SettingsPage() {
 
                 {/* Reset & Maintenance */}
                 <section className="rounded-2xl border border-border bg-surface p-6 space-y-4">
-                    <h2 className="text-[15px] font-semibold text-foreground">
-                        Demo Data & Clean Slate
-                    </h2>
+                    <div className="flex items-center justify-between">
+                        <h2 className="text-[15px] font-semibold text-foreground">
+                            Workspace Storage & Reset
+                        </h2>
+                        <span className="text-[12px] font-medium text-foreground-muted">
+                            {state.subjects.length} courses · {state.items.length} items
+                        </span>
+                    </div>
                     <p className="text-[13px] text-foreground-muted leading-relaxed">
-                        Reset back to the default demo coursework dataset, or clear all data to set up your subjects from scratch.
+                        Clear all local items, subjects, and study materials to begin with a completely fresh workspace. Cloud database sync remains intact unless updated.
                     </p>
 
                     <div className="flex flex-wrap gap-3 pt-2">
-                        <button
-                            onClick={handleReset}
-                            className="inline-flex items-center gap-2 rounded-xl bg-inverse px-4 py-2 text-[13px] font-medium text-inverse-foreground hover:opacity-90 transition-opacity"
-                        >
-                            <RefreshCw size={14} />
-                            <span>Reload Sample Content</span>
-                        </button>
-
                         <button
                             onClick={handleClear}
                             className="inline-flex items-center gap-2 rounded-xl border border-red-500/30 px-4 py-2 text-[13px] font-medium text-red-600 dark:text-red-400 hover:bg-red-500/5 transition-colors"
                         >
                             <Trash2 size={14} />
-                            <span>Clear All Local Data</span>
+                            <span>Reset Local Workspace to Clean Slate</span>
                         </button>
                     </div>
                 </section>

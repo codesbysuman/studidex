@@ -162,17 +162,17 @@ export default function UpdatesPage() {
                                             )}
                                         </div>
 
-                                        {/* Toggle Provenance / Details button */}
+                                        {/* Toggle Notice Details button */}
                                         <button
                                             onClick={() => toggleExpand(update.id)}
                                             className="shrink-0 rounded-lg p-1.5 text-foreground-muted hover:bg-surface-subtle hover:text-foreground"
-                                            title="View origin and source details"
+                                            title="View original notice"
                                         >
                                             {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
                                         </button>
                                     </div>
 
-                                    {/* Collapsible Provenance Details (Section 15) */}
+                                    {/* Collapsible Original Notice Details */}
                                     {isExpanded && (
                                         <motion.div
                                             initial={{ opacity: 0, height: 0 }}
@@ -181,7 +181,7 @@ export default function UpdatesPage() {
                                             className="mt-4 border-t border-border-subtle pt-3.5 text-[12px]"
                                         >
                                             <p className="font-semibold uppercase tracking-wider text-foreground-muted text-[10.5px]">
-                                                Input Provenance & Context
+                                                Original Notice & Context
                                             </p>
 
                                             {provenance ? (
@@ -196,7 +196,7 @@ export default function UpdatesPage() {
                                                 </div>
                                             ) : (
                                                 <p className="mt-1 text-foreground-muted italic">
-                                                    Directly recorded by user or system update.
+                                                    Directly added to your study schedule.
                                                 </p>
                                             )}
                                         </motion.div>

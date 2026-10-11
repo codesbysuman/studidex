@@ -22,6 +22,8 @@ import {
     GraduationCap,
     Building2,
     Layers,
+    CheckSquare,
+    Plus,
 } from "lucide-react";
 import { useStudidex } from "@/lib/use-studidex";
 import { getSmartHomeData, formatTime, formatHumanDate } from "@/lib/core";
@@ -29,7 +31,7 @@ import { getSmartHomeData, formatTime, formatHumanDate } from "@/lib/core";
 export default function HomePage() {
     const { state, toggleAction, updateProfile } = useStudidex();
     const data = getSmartHomeData(state);
-    const profile = state.profile || { name: "Student", stage: "ug" };
+    const profile = state.profile || { name: "", stage: "ug" };
 
     const hasTodayContent =
         data.todayClasses.length > 0 ||
@@ -64,17 +66,25 @@ export default function HomePage() {
                             </p>
                         </div>
 
-                        {/* Personalize Profile Link Button */}
-                        {/* <Link
-                            href="/profile"
-                            className="inline-flex items-center gap-2 self-start rounded-xl border border-border bg-surface px-3.5 py-2 text-[12.5px] font-medium text-foreground shadow-xs hover:border-foreground hover:shadow-xs transition-all active:scale-98"
-                        >
-                            <div className="flex h-5 w-5 items-center justify-center rounded-full bg-foreground text-surface text-[10px] font-bold">
-                                {profile.name ? profile.name.charAt(0).toUpperCase() : "S"}
-                            </div>
-                            <span>Academic Profile</span>
-                            <Edit3 size={13} className="text-foreground-muted" />
-                        </Link> */}
+                        {/* Quick Header Actions */}
+                        <div className="flex items-center gap-2 self-start">
+                            <Link
+                                href="/add"
+                                className="inline-flex items-center gap-1.5 rounded-xl bg-foreground px-3.5 py-2 text-[12.5px] font-semibold text-surface shadow-xs hover:opacity-90 active:scale-98 transition-all"
+                            >
+                                <Plus size={14} />
+                                <span>Add</span>
+                            </Link>
+                            <Link
+                                href="/profile"
+                                className="inline-flex items-center gap-2 rounded-xl border border-border bg-surface px-3 py-2 text-[12.5px] font-medium text-foreground hover:bg-surface-subtle active:scale-98 transition-all"
+                            >
+                                <div className="flex h-4 w-4 items-center justify-center rounded-full bg-foreground text-surface text-[9px] font-bold">
+                                    {profile.name ? profile.name.charAt(0).toUpperCase() : "S"}
+                                </div>
+                                <span>Profile</span>
+                            </Link>
+                        </div>
                     </div>
 
                     {/* Quick Academic Profile Summary Pills */}
@@ -337,6 +347,119 @@ export default function HomePage() {
                             ))}
                         </div>
                     </section>
+                )}
+
+                {/* If no events today, show Launchpad or friendly clear state with quick action buttons */}
+                {!hasTodayContent && (
+                    state.items.length === 0 ? (
+                        <section className="rounded-2xl border border-border bg-surface p-6 sm:p-8 space-y-6">
+                            <div className="space-y-1.5">
+                                <div className="inline-flex items-center gap-1.5 rounded-full bg-surface-subtle px-2.5 py-0.5 text-[11px] font-semibold text-foreground">
+                                    <Sparkles size={12} />
+                                    <span>Study Launchpad</span>
+                                </div>
+                                <h2 className="text-xl font-bold tracking-tight text-foreground sm:text-2xl">
+                                    Welcome to your study space
+                                </h2>
+                                <p className="text-[13.5px] text-foreground-muted leading-relaxed max-w-xl">
+                                    Track your courses, schedule upcoming lectures and exams, and manage your homework in one clean, private place.
+                                </p>
+                            </div>
+
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+                                <Link
+                                    href="/subjects"
+                                    className="group flex flex-col justify-between rounded-xl border border-border-subtle bg-surface-subtle/30 p-4.5 transition-all hover:border-foreground hover:bg-surface"
+                                >
+                                    <div className="space-y-2">
+                                        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-surface text-foreground shadow-2xs">
+                                            <BookOpen size={18} />
+                                        </div>
+                                        <h3 className="text-[14px] font-semibold text-foreground group-hover:underline">
+                                            1. Add Your Courses
+                                        </h3>
+                                        <p className="text-[12px] text-foreground-muted leading-relaxed">
+                                            Set up your enrolled classes, subjects, and study units.
+                                        </p>
+                                    </div>
+                                    <div className="mt-4 flex items-center gap-1 text-[12px] font-medium text-foreground">
+                                        <span>Manage Courses</span>
+                                        <ArrowRight size={13} className="transition-transform group-hover:translate-x-0.5" />
+                                    </div>
+                                </Link>
+
+                                <Link
+                                    href="/add"
+                                    className="group flex flex-col justify-between rounded-xl border border-border-subtle bg-surface-subtle/30 p-4.5 transition-all hover:border-foreground hover:bg-surface"
+                                >
+                                    <div className="space-y-2">
+                                        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-surface text-foreground shadow-2xs">
+                                            <CheckSquare size={18} />
+                                        </div>
+                                        <h3 className="text-[14px] font-semibold text-foreground group-hover:underline">
+                                            2. Schedule & Tasks
+                                        </h3>
+                                        <p className="text-[12px] text-foreground-muted leading-relaxed">
+                                            Record upcoming lectures, exam dates, or assignments.
+                                        </p>
+                                    </div>
+                                    <div className="mt-4 flex items-center gap-1 text-[12px] font-medium text-foreground">
+                                        <span>Quick Add</span>
+                                        <ArrowRight size={13} className="transition-transform group-hover:translate-x-0.5" />
+                                    </div>
+                                </Link>
+
+                                <Link
+                                    href="/add"
+                                    className="group flex flex-col justify-between rounded-xl border border-border-subtle bg-surface-subtle/30 p-4.5 transition-all hover:border-foreground hover:bg-surface"
+                                >
+                                    <div className="space-y-2">
+                                        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-surface text-foreground shadow-2xs">
+                                            <Sparkles size={18} />
+                                        </div>
+                                        <h3 className="text-[14px] font-semibold text-foreground group-hover:underline">
+                                            3. Smart AI Intake
+                                        </h3>
+                                        <p className="text-[12px] text-foreground-muted leading-relaxed">
+                                            Paste a class announcement or circular to sort it.
+                                        </p>
+                                    </div>
+                                    <div className="mt-4 flex items-center gap-1 text-[12px] font-medium text-foreground">
+                                        <span>Smart Intake</span>
+                                        <ArrowRight size={13} className="transition-transform group-hover:translate-x-0.5" />
+                                    </div>
+                                </Link>
+                            </div>
+                        </section>
+                    ) : (
+                        <section className="rounded-2xl border border-dashed border-border-subtle bg-surface p-6 space-y-3">
+                            <div className="flex items-center justify-between">
+                                <h2 className="text-[12px] font-semibold uppercase tracking-[0.16em] text-foreground-muted">
+                                    Today's Agenda
+                                </h2>
+                                <span className="text-[11px] font-medium text-foreground-muted">All clear today</span>
+                            </div>
+                            <p className="text-[13px] text-foreground-muted leading-relaxed">
+                                No classes or deadlines scheduled for today. Check upcoming events below or schedule a study block.
+                            </p>
+                            <div className="flex flex-wrap items-center gap-2 pt-1">
+                                <Link
+                                    href="/plan"
+                                    className="inline-flex items-center gap-1.5 rounded-xl border border-border bg-surface px-3 py-1.5 text-[12px] font-semibold text-foreground hover:bg-surface-subtle"
+                                >
+                                    <Calendar size={13} />
+                                    <span>Open Schedule / Plan</span>
+                                </Link>
+                                <Link
+                                    href="/actions"
+                                    className="inline-flex items-center gap-1.5 rounded-xl border border-border bg-surface px-3 py-1.5 text-[12px] font-semibold text-foreground hover:bg-surface-subtle"
+                                >
+                                    <CheckSquare size={13} />
+                                    <span>View Tasks & Actions</span>
+                                </Link>
+                            </div>
+                        </section>
+                    )
                 )}
 
                 {/* 2. NEXT SECTION */}

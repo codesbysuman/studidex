@@ -66,7 +66,29 @@ export default function MaterialsPage() {
                 <div>
                     <div className="flex items-center justify-between gap-2">
                         <span className="rounded bg-surface-subtle px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-foreground-muted">
-                            {mat.type} · {mat.origin}
+                            {mat.type === "mock_test"
+                                ? "Practice Quiz"
+                                : mat.type === "pyq"
+                                ? "Past Paper"
+                                : mat.type === "sample_paper"
+                                ? "Sample Paper"
+                                : mat.type === "syllabus"
+                                ? "Syllabus"
+                                : mat.type === "handout"
+                                ? "Handout"
+                                : mat.type === "reference"
+                                ? "Reference"
+                                : mat.type === "pdf" || mat.type === "document"
+                                ? "Document"
+                                : "Study Note"}{" "}
+                            ·{" "}
+                            {mat.origin === "personal"
+                                ? "My Notes"
+                                : mat.origin === "teacher"
+                                ? "Faculty"
+                                : mat.origin === "college"
+                                ? "Dept"
+                                : "Curated"}
                         </span>
 
                         {subject && (

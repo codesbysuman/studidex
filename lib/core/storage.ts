@@ -1,6 +1,7 @@
 // lib/core/storage.ts
 import { StudidexState } from "./types";
 import { INITIAL_STUDIDEX_STATE } from "./sample-data";
+import { getDexieState, saveDexieState, clearDexieState } from "../db/dexie";
 
 const STORAGE_KEY = "studidex_academic_state_v1";
 const STATE_EVENT = "studidex:state-change";
@@ -8,6 +9,23 @@ const STATE_EVENT = "studidex:state-change";
 let cachedState: StudidexState = INITIAL_STUDIDEX_STATE;
 let lastRawString: string | null = null;
 let isInitialized = false;
+
+// Initialize background load from Dexie IndexedDB
+if (typeof window !== "undefined") {
+    setTimeout(async () => {
+        try {
+            const dexieState = await getDexieState();
+            if (dexieState && (dexieState.subjects.length > 0 || dexieState.items.length > 0 || dexieState.profile?.name)) {
+                cachedState = dexieState;
+                lastRawString = JSON.stringify(dexieState);
+                isInitialized = true;
+                window.dispatchEvent(new CustomEvent(STATE_EVENT, { detail: dexieState }));
+            }
+        } catch (e) {
+            console.warn("Studidex: Dexie hydration error:", e);
+        }
+    }, 0);
+}
 
 /**
  * Safe local storage reader for SSR & client with referential caching for useSyncExternalStore
@@ -20,8 +38,6 @@ export function getStoredState(): StudidexState {
     try {
         const raw = localStorage.getItem(STORAGE_KEY);
         if (!raw) {
-            // First time visitor: seed initial sample state
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(INITIAL_STUDIDEX_STATE));
             cachedState = INITIAL_STUDIDEX_STATE;
             lastRawString = null;
             isInitialized = true;
@@ -42,25 +58,13 @@ export function getStoredState(): StudidexState {
             profile: {
                 ...INITIAL_STUDIDEX_STATE.profile,
                 ...(parsed.profile || {}),
-                papers: (parsed.profile?.papers && parsed.profile.papers.length > 0)
-                    ? parsed.profile.papers
-                    : (INITIAL_STUDIDEX_STATE.profile?.papers || []),
+                papers: parsed.profile?.papers || [],
             },
         } as StudidexState;
         isInitialized = true;
         return cachedState;
     } catch (e) {
-        console.warn("Studidex: Error reading local storage, falling back to backup snapshot or sample data.", e);
-        try {
-            const backup = localStorage.getItem(`${STORAGE_KEY}_backup`);
-            if (backup) {
-                cachedState = JSON.parse(backup) as StudidexState;
-                isInitialized = true;
-                return cachedState;
-            }
-        } catch {
-            // ignore
-        }
+        console.warn("Studidex: Error reading local storage.", e);
         cachedState = INITIAL_STUDIDEX_STATE;
         isInitialized = true;
         return cachedState;
@@ -68,7 +72,7 @@ export function getStoredState(): StudidexState {
 }
 
 /**
- * Save updated state to local storage and broadcast to listeners with automatic backup
+ * Save updated state to IndexedDB (Dexie) and fallback storage, broadcasting to listeners
  */
 export function saveStoredState(state: StudidexState): void {
     if (typeof window === "undefined") return;
@@ -82,12 +86,18 @@ export function saveStoredState(state: StudidexState): void {
         cachedState = payload;
         lastRawString = serialized;
         isInitialized = true;
+
+        // Save to IndexedDB via Dexie
+        saveDexieState(payload).catch((err) => {
+            console.warn("Studidex: Error persisting to Dexie:", err);
+        });
+
+        // Fast synchronous cache in localStorage for SSR hydration
         localStorage.setItem(STORAGE_KEY, serialized);
-        // Automatic secondary backup snapshot for data resilience
-        localStorage.setItem(`${STORAGE_KEY}_backup`, serialized);
+
         window.dispatchEvent(new CustomEvent(STATE_EVENT, { detail: payload }));
     } catch (e) {
-        console.error("Studidex: Error saving state to storage.", e);
+        console.error("Studidex: Error saving state.", e);
     }
 }
 
@@ -114,29 +124,17 @@ export function subscribeToState(callback: () => void): () => void {
 }
 
 /**
- * Reset application state back to the default sample dataset
+ * Clear all data (fresh clean production state)
  */
-export function resetStateToSample(): StudidexState {
+export function clearAllState(): StudidexState {
     saveStoredState(INITIAL_STUDIDEX_STATE);
+    clearDexieState().catch(() => {});
     return INITIAL_STUDIDEX_STATE;
 }
 
 /**
- * Clear all data (empty state)
+ * Reset data to clean initial state
  */
-export function clearAllState(): StudidexState {
-    const emptyState: StudidexState = {
-        version: 1,
-        profile: {
-            name: "Student",
-        },
-        lastUpdated: new Date().toISOString(),
-        subjects: [],
-        topics: [],
-        inputs: [],
-        items: [],
-        materials: [],
-    };
-    saveStoredState(emptyState);
-    return emptyState;
+export function resetStateToSample(): StudidexState {
+    return clearAllState();
 }

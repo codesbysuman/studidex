@@ -279,3 +279,41 @@ export function updateUserProfile(
     };
 }
 
+/**
+ * Create a new academic item (class, exam, test, deadline, assignment)
+ */
+export function createItem(
+    state: StudidexState,
+    item: Omit<AcademicItem, "id"> & { id?: string }
+): StudidexState {
+    const newItem: AcademicItem = {
+        ...item,
+        id: item.id || generateId("item"),
+    };
+
+    return {
+        ...state,
+        items: [newItem, ...state.items],
+        lastUpdated: new Date().toISOString(),
+    };
+}
+
+/**
+ * Create a new study material or mock test
+ */
+export function createMaterial(
+    state: StudidexState,
+    material: Omit<Material, "id"> & { id?: string }
+): StudidexState {
+    const newMaterial: Material = {
+        ...material,
+        id: material.id || generateId("mat"),
+    };
+
+    return {
+        ...state,
+        materials: [newMaterial, ...state.materials],
+        lastUpdated: new Date().toISOString(),
+    };
+}
+

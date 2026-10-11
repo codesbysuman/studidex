@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import AddClient from "./add-client";
 
 export const metadata: Metadata = {
-  title: "Import & Add Course Data",
+  title: "Add & Organize Studies",
   description:
-    "Seamlessly import course syllabi, JSON envelopes, timetable schedules, and assignments into Studidex.",
+    "Quickly add assignments, exams, classes, and study notes, or import class schedules into Studidex.",
   alternates: {
     canonical: "/add",
   },

@@ -168,36 +168,28 @@ const PAPER_CATEGORY_OPTIONS: { value: PaperCategory; label: string; desc: strin
 ];
 
 export default function ProfileClient() {
-    const { state, updateProfile } = useStudidex();
-    const profile = state.profile || { name: "Student", stage: "ug" };
+    const { state, user, updateProfile } = useStudidex();
+    const profile = state.profile || { name: user?.name || "", stage: "ug" };
 
     // Initial stage detection
-    const initialStage: EducationStage =
-        profile.stage ||
-        (profile.className?.toLowerCase().includes("semester")
-            ? "ug"
-            : profile.className === "Class 11" || profile.className === "Class 12"
-            ? "hs"
-            : profile.className?.toLowerCase().includes("class")
-            ? "school"
-            : "ug");
+    const initialStage: EducationStage = profile.stage || "ug";
 
     const [stage, setStage] = useState<EducationStage>(initialStage);
-    const [name, setName] = useState(profile.name || "Student");
-    const [className, setClassName] = useState(profile.className || "Semester 3");
+    const [name, setName] = useState(profile.name || user?.name || "");
+    const [className, setClassName] = useState(profile.className || "");
     const [examiningBody, setExaminingBody] = useState(
-        profile.examiningBody || profile.board || "University of Calcutta"
+        profile.examiningBody || profile.board || ""
     );
     const [institutionName, setInstitutionName] = useState(profile.institutionName || "");
     const [center, setCenter] = useState(profile.center || "");
     const [medium, setMedium] = useState(profile.medium || "English");
-    const [degree, setDegree] = useState(profile.degree || "B.A. (Hons)");
-    const [stream, setStream] = useState(profile.stream || "Humanities & Social Sciences");
+    const [degree, setDegree] = useState(profile.degree || "");
+    const [stream, setStream] = useState(profile.stream || "");
     const [specialization, setSpecialization] = useState(
-        profile.specialization || "Political Science"
+        profile.specialization || ""
     );
     const [minorSpecialization, setMinorSpecialization] = useState(
-        profile.minorSpecialization || "Economics"
+        profile.minorSpecialization || ""
     );
 
     // Papers for UG & PG
@@ -220,45 +212,27 @@ export default function ProfileClient() {
     useEffect(() => {
         if (state.profile) {
             const p = state.profile;
-            setName(p.name || "Student");
+            setName(p.name || user?.name || "");
             setStage(p.stage || initialStage);
-            setClassName(p.className || (initialStage === "ug" ? "Semester 3" : "Class 12"));
+            setClassName(p.className || "");
             setExaminingBody(p.examiningBody || p.board || "");
             setInstitutionName(p.institutionName || "");
             setCenter(p.center || "");
             setMedium(p.medium || "English");
-            setDegree(p.degree || "B.A. (Hons)");
-            setStream(p.stream || "Humanities & Social Sciences");
+            setDegree(p.degree || "");
+            setStream(p.stream || "");
             setSpecialization(p.specialization || "");
             setMinorSpecialization(p.minorSpecialization || "");
             setPapers(p.papers || []);
             setSelectedSubjectIds(p.enrolledSubjectIds || []);
         }
-    }, [state.profile]);
+    }, [state.profile, user?.name]);
 
     const stageConfig = STAGE_CONFIGS[stage];
 
-    // Stage switch handler
+    // Stage switch handler - preserves user inputs without hardcoding mock demos
     const handleStageChange = (newStage: EducationStage) => {
         setStage(newStage);
-        if (newStage === "school") {
-            setClassName("Class 10");
-            setExaminingBody("CBSE");
-        } else if (newStage === "hs") {
-            setClassName("Class 12");
-            setExaminingBody("CBSE");
-            setStream("Science (PCM — Physics, Chemistry, Math)");
-        } else if (newStage === "ug") {
-            setClassName("Semester 3");
-            setDegree("B.A. (Hons)");
-            setExaminingBody("University of Calcutta");
-            setSpecialization("Political Science");
-        } else if (newStage === "pg") {
-            setClassName("Semester 2");
-            setDegree("M.A. (Master of Arts)");
-            setExaminingBody("University of Delhi");
-            setSpecialization("International Relations");
-        }
     };
 
     // Add Paper for UG / PG
@@ -489,7 +463,7 @@ export default function ProfileClient() {
                                 type="text"
                                 value={name}
                                 onChange={(e) => setName(e.target.value)}
-                                placeholder="Your preferred name (e.g. Suman, Alex)"
+                                placeholder="Enter your full name or nickname"
                                 className="w-full rounded-xl border border-border bg-surface py-2.5 px-3.5 text-[13.5px] text-foreground focus:border-foreground focus:outline-none transition-colors"
                             />
                         </div>

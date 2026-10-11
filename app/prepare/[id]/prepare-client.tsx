@@ -18,12 +18,16 @@ import {
     ShieldAlert,
     Sparkles,
 } from "lucide-react";
+import { useState } from "react";
 import { useStudidex } from "@/lib/use-studidex";
 import { getPreparationDetail, formatHumanDate, formatTime } from "@/lib/core";
 
 export default function PreparationViewPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = use(params);
-    const { state, toggleAction } = useStudidex();
+    const { state, toggleAction, addMaterial } = useStudidex();
+
+    const [aiQuizLoading, setAiQuizLoading] = useState(false);
+    const [aiQuizError, setAiQuizError] = useState<string | null>(null);
 
     const prep = getPreparationDetail(state, id);
     if (!prep) {
@@ -42,6 +46,47 @@ export default function PreparationViewPage({ params }: { params: Promise<{ id: 
         prepActions,
         relatedAssignments,
     } = prep;
+
+    const handleGenerateAiMockTest = async () => {
+        setAiQuizLoading(true);
+        setAiQuizError(null);
+
+        try {
+            const res = await fetch("/api/ai/quiz", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    subject: subject?.name || event.title,
+                    topics: topics.map((t) => t.name),
+                    difficulty: "Standard Exam",
+                    questionCount: 5,
+                }),
+            });
+
+            const data = await res.json();
+            if (!res.ok) {
+                throw new Error(data.error || "Failed to generate mock test.");
+            }
+
+            const testData = data.testData;
+            addMaterial({
+                type: "mock_test",
+                origin: "teacher",
+                title: testData.title || `Practice Drill: ${event.title}`,
+                description: `Practice examination questions covering ${topics.map((t) => t.name).join(", ") || "core syllabus"}.`,
+                subjectId: subject?.id,
+                testData: {
+                    durationMinutes: testData.durationMinutes || 15,
+                    totalMarks: testData.totalMarks || 25,
+                    questions: testData.questions || [],
+                },
+            });
+        } catch (err: any) {
+            setAiQuizError(err?.message || "Failed to generate mock test.");
+        } finally {
+            setAiQuizLoading(false);
+        }
+    };
 
     return (
         <main className="min-h-screen px-5 pb-36 pt-8 md:px-12 md:pb-20 md:pt-14">
@@ -213,13 +258,30 @@ export default function PreparationViewPage({ params }: { params: Promise<{ id: 
                 )}
 
                 {/* MOCK TESTS & PYQS PRACTICE */}
-                {(mockTests.length > 0 || pyqs.length > 0) && (
-                    <section className="space-y-4">
-                        <div className="border-b border-border-subtle pb-2">
+                <section className="space-y-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border-subtle pb-2">
+                        <div>
                             <h2 className="text-[12px] font-semibold uppercase tracking-[0.16em] text-foreground-muted">
                                 Test Readiness: Mocks & PYQs
                             </h2>
                         </div>
+
+                        <button
+                            type="button"
+                            onClick={handleGenerateAiMockTest}
+                            disabled={aiQuizLoading}
+                            className="inline-flex items-center gap-1.5 self-start sm:self-auto rounded-xl border border-border bg-surface px-3 py-1.5 text-[12px] font-semibold text-foreground hover:bg-surface-subtle shadow-2xs transition-all active:scale-98 disabled:opacity-50"
+                        >
+                            <Sparkles size={13} />
+                            <span>{aiQuizLoading ? "Generating Questions..." : "Generate AI Mock Test"}</span>
+                        </button>
+                    </div>
+
+                    {aiQuizError && (
+                        <div className="rounded-xl border border-red-500/20 bg-red-500/5 p-3 text-[12px] text-red-600 dark:text-red-400">
+                            {aiQuizError}
+                        </div>
+                    )}
 
                         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                             {mockTests.map((mt) => (
@@ -290,7 +352,6 @@ export default function PreparationViewPage({ params }: { params: Promise<{ id: 
                             ))}
                         </div>
                     </section>
-                )}
 
                 {/* YOUR NOTES & OFFICIAL HANDOUTS */}
                 <section className="space-y-4">
