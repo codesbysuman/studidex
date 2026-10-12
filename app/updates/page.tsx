@@ -10,6 +10,9 @@ export const metadata: Metadata = {
   },
 };
 
-export default function UpdatesPage() {
-  return <UpdatesClient />;
+import { getServerStudidexData } from "@/lib/server/studidex-server";
+
+export default async function UpdatesPage() {
+  const { user, state, isDbConnected } = await getServerStudidexData();
+  return <UpdatesClient initialUser={user} initialState={state} isDbConnected={isDbConnected} />;
 }

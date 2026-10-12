@@ -19,12 +19,30 @@ import {
     Sparkles,
 } from "lucide-react";
 import { useState } from "react";
-import { useStudidex } from "@/lib/use-studidex";
-import { getPreparationDetail, formatHumanDate, formatTime } from "@/lib/core";
+import { useStudidex, type AuthUser } from "@/lib/use-studidex";
+import { getPreparationDetail, formatHumanDate, formatTime, type StudidexState } from "@/lib/core";
+import { generateQuizAction } from "@/lib/server/ai-actions";
 
-export default function PreparationViewPage({ params }: { params: Promise<{ id: string }> }) {
-    const { id } = use(params);
-    const { state, toggleAction, addMaterial } = useStudidex();
+export default function PreparationViewPage({
+    id: propId,
+    params,
+    initialUser,
+    initialState,
+    isDbConnected,
+}: {
+    id?: string;
+    params?: Promise<{ id: string }>;
+    initialUser?: AuthUser | null;
+    initialState?: StudidexState | null;
+    isDbConnected?: boolean;
+}) {
+    const resolvedParams = params ? use(params) : null;
+    const id = propId || resolvedParams?.id || "";
+    const { state, toggleAction, addMaterial } = useStudidex({
+        user: initialUser,
+        state: initialState,
+        isDbConnected,
+    });
 
     const [aiQuizLoading, setAiQuizLoading] = useState(false);
     const [aiQuizError, setAiQuizError] = useState<string | null>(null);
@@ -52,23 +70,18 @@ export default function PreparationViewPage({ params }: { params: Promise<{ id: 
         setAiQuizError(null);
 
         try {
-            const res = await fetch("/api/ai/quiz", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    subject: subject?.name || event.title,
-                    topics: topics.map((t) => t.name),
-                    difficulty: "Standard Exam",
-                    questionCount: 5,
-                }),
+            const result = await generateQuizAction({
+                subject: subject?.name || event.title,
+                topics: topics.map((t) => t.name),
+                difficulty: "Standard Exam",
+                questionCount: 5,
             });
 
-            const data = await res.json();
-            if (!res.ok) {
-                throw new Error(data.error || "Failed to generate mock test.");
+            if (!result.success || !result.data) {
+                throw new Error(result.error || "Failed to generate mock test.");
             }
 
-            const testData = data.testData;
+            const testData = result.data;
             addMaterial({
                 type: "mock_test",
                 origin: "teacher",

@@ -10,6 +10,9 @@ export const metadata: Metadata = {
   },
 };
 
-export default function MaterialsPage() {
-  return <MaterialsClient />;
+import { getServerStudidexData } from "@/lib/server/studidex-server";
+
+export default async function MaterialsPage() {
+  const { user, state, isDbConnected } = await getServerStudidexData();
+  return <MaterialsClient initialUser={user} initialState={state} isDbConnected={isDbConnected} />;
 }

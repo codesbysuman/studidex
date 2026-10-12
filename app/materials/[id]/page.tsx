@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { INITIAL_STUDIDEX_STATE } from "@/lib/core/sample-data";
+import { getServerStudidexData } from "@/lib/server/studidex-server";
 import MaterialDetailClient from "./material-client";
 
 type Props = {
@@ -8,7 +9,10 @@ type Props = {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { id } = await params;
-  const material = INITIAL_STUDIDEX_STATE.materials.find((m) => m.id === id);
+  const { state } = await getServerStudidexData();
+  const material =
+    state.materials.find((m) => m.id === id) ||
+    INITIAL_STUDIDEX_STATE.materials.find((m) => m.id === id);
 
   const title = material ? material.title : "Study Material Details";
   const description =
@@ -28,6 +32,15 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
-export default function MaterialDetailPage({ params }: Props) {
-  return <MaterialDetailClient params={params} />;
+export default async function MaterialDetailPage({ params }: Props) {
+  const { id } = await params;
+  const { user, state, isDbConnected } = await getServerStudidexData();
+  return (
+    <MaterialDetailClient
+      id={id}
+      initialUser={user}
+      initialState={state}
+      isDbConnected={isDbConnected}
+    />
+  );
 }

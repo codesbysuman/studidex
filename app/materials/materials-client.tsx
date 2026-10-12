@@ -17,12 +17,24 @@ import {
     ChevronDown,
     X,
 } from "lucide-react";
-import { useStudidex } from "@/lib/use-studidex";
-import { categorizeMaterials, Material } from "@/lib/core";
+import { useStudidex, type AuthUser } from "@/lib/use-studidex";
+import { categorizeMaterials, Material, type StudidexState } from "@/lib/core";
 import { CustomSelect } from "@/components/ui/custom-select";
 
-export default function MaterialsPage() {
-    const { state } = useStudidex();
+export default function MaterialsPage({
+    initialUser,
+    initialState,
+    isDbConnected,
+}: {
+    initialUser?: AuthUser | null;
+    initialState?: StudidexState | null;
+    isDbConnected?: boolean;
+} = {}) {
+    const { state } = useStudidex({
+        user: initialUser,
+        state: initialState,
+        isDbConnected,
+    });
     const [searchQuery, setSearchQuery] = useState("");
     const [selectedSubjectId, setSelectedSubjectId] = useState<string>("all");
     const [selectedCategory, setSelectedCategory] = useState<string>("all");

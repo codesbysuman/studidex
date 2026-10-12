@@ -41,19 +41,18 @@ export default function Header({ className = "" }: { className?: string }) {
             onClick={handleSyncClick}
             disabled={isSyncing}
             aria-label={isAuthenticated ? "Sync with Cloud Database" : "Connect Cloud Database"}
-            className={`flex h-8 items-center gap-1.5 rounded-lg border px-2.5 text-[11.5px] font-medium transition-all active:scale-95 ${
-              isAuthenticated
-                ? "border-green-500/30 bg-green-500/10 text-green-700 dark:text-green-300"
-                : "border-border-subtle bg-surface text-foreground-muted hover:text-foreground"
-            }`}
+            className={`flex h-8 items-center gap-1.5 rounded-lg border px-2.5 text-[11.5px] font-medium transition-all active:scale-95 ${isAuthenticated
+              ? "border-green-500/30 bg-green-500/10 text-green-700 dark:text-green-300"
+              : "border-border-subtle bg-surface text-foreground-muted hover:text-foreground"
+              }`}
           >
             {isSyncing ? (
               <RefreshCw size={13} className="animate-spin text-foreground" />
             ) : (
               <Cloud size={13} />
             )}
-            <span className="font-semibold">
-              {isSyncing ? "Syncing" : isAuthenticated ? "Synced" : "Sync"}
+            <span className={!isSyncing && !isAuthenticated ? `hidden` : `font-semibold`}>
+              {isSyncing ? "Syncing" : isAuthenticated ? "Synced" : null}
             </span>
             {isAuthenticated && !isSyncing && (
               <span className="h-1.5 w-1.5 rounded-full bg-green-500 animate-pulse" />

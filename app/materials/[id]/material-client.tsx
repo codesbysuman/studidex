@@ -19,12 +19,30 @@ import {
     Sparkles,
     XCircle,
 } from "lucide-react";
-import { useStudidex } from "@/lib/use-studidex";
-import { MockTestAttempt, formatHumanDate } from "@/lib/core";
+import { useStudidex, type AuthUser } from "@/lib/use-studidex";
+import { MockTestAttempt, formatHumanDate, generateId, type StudidexState } from "@/lib/core";
+import { generateSummaryAction } from "@/lib/server/ai-actions";
 
-export default function MaterialDetailPage({ params }: { params: Promise<{ id: string }> }) {
-    const { id } = use(params);
-    const { state, saveTestAttempt } = useStudidex();
+export default function MaterialDetailPage({
+    id: propId,
+    params,
+    initialUser,
+    initialState,
+    isDbConnected,
+}: {
+    id?: string;
+    params?: Promise<{ id: string }>;
+    initialUser?: AuthUser | null;
+    initialState?: StudidexState | null;
+    isDbConnected?: boolean;
+}) {
+    const resolvedParams = params ? use(params) : null;
+    const id = propId || resolvedParams?.id || "";
+    const { state, saveTestAttempt } = useStudidex({
+        user: initialUser,
+        state: initialState,
+        isDbConnected,
+    });
 
     const material = state.materials.find((m) => m.id === id);
     if (!material) {
@@ -53,44 +71,23 @@ export default function MaterialDetailPage({ params }: { params: Promise<{ id: s
         setAiSummaryError(null);
 
         try {
-            const res = await fetch("/api/ai/summarize", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    title: material.title,
-                    subject: subject?.name,
-                    content: material.content || material.description,
-                }),
+            const result = await generateSummaryAction({
+                title: material.title,
+                subject: subject?.name,
+                content: material.content || material.description || "",
             });
 
-            const data = await res.json();
-            if (!res.ok) {
-                throw new Error(data.error || "Failed to summarize material.");
+            if (!result.success || !result.data) {
+                throw new Error(result.error || "Failed to summarize material.");
             }
 
-            setAiSummaryData(data.summary);
+            setAiSummaryData(result.data.summary);
         } catch (err: any) {
             setAiSummaryError(err?.message || "Failed to summarize material.");
         } finally {
             setAiSummaryLoading(false);
         }
     };
-
-    // Countdown timer
-    useEffect(() => {
-        if (testMode !== "taking") return;
-        const interval = setInterval(() => {
-            setTimeRemainingSeconds((prev) => {
-                if (prev <= 1) {
-                    clearInterval(interval);
-                    handleSubmitTest();
-                    return 0;
-                }
-                return prev - 1;
-            });
-        }, 1000);
-        return () => clearInterval(interval);
-    }, [testMode]);
 
     const handleSelectOption = (questionId: string, optionIndex: number) => {
         setSelectedAnswers((prev) => ({
@@ -111,7 +108,7 @@ export default function MaterialDetailPage({ params }: { params: Promise<{ id: s
         });
 
         const attempt: MockTestAttempt = {
-            id: `att_${Date.now()}`,
+            id: generateId("att"),
             timestamp: new Date().toISOString(),
             score,
             totalMarks: material.testData.totalMarks,
@@ -122,6 +119,22 @@ export default function MaterialDetailPage({ params }: { params: Promise<{ id: s
         saveTestAttempt(material.id, attempt);
         setTestMode("review");
     };
+
+    // Countdown timer
+    useEffect(() => {
+        if (testMode !== "taking") return;
+        const interval = setInterval(() => {
+            setTimeRemainingSeconds((prev) => {
+                if (prev <= 1) {
+                    clearInterval(interval);
+                    handleSubmitTest();
+                    return 0;
+                }
+                return prev - 1;
+            });
+        }, 1000);
+        return () => clearInterval(interval);
+    }, [testMode, handleSubmitTest]);
 
     const handleRestartTest = () => {
         setSelectedAnswers({});

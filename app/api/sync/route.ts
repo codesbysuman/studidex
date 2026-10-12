@@ -243,7 +243,37 @@ export async function POST(req: NextRequest) {
         },
       });
 
-      // 2. Upsert subjects with strict tenant isolation (IDOR protection)
+      // 2. Reconcile records deleted on client with safe relational deletion order
+      const payloadSubjectIds = subjects.map((s) => String(s.id)).filter(Boolean);
+      const payloadTopicIds = topics.map((t) => String(t.id)).filter(Boolean);
+      const payloadItemIds = items.map((i) => String(i.id)).filter(Boolean);
+      const payloadMaterialIds = materials.map((m) => String(m.id)).filter(Boolean);
+
+      if (payloadItemIds.length > 0) {
+        await tx.academicItem.deleteMany({ where: { userId, id: { notIn: payloadItemIds } } });
+      } else {
+        await tx.academicItem.deleteMany({ where: { userId } });
+      }
+
+      if (payloadMaterialIds.length > 0) {
+        await tx.material.deleteMany({ where: { userId, id: { notIn: payloadMaterialIds } } });
+      } else {
+        await tx.material.deleteMany({ where: { userId } });
+      }
+
+      if (payloadTopicIds.length > 0) {
+        await tx.topic.deleteMany({ where: { userId, id: { notIn: payloadTopicIds } } });
+      } else {
+        await tx.topic.deleteMany({ where: { userId } });
+      }
+
+      if (payloadSubjectIds.length > 0) {
+        await tx.subject.deleteMany({ where: { userId, id: { notIn: payloadSubjectIds } } });
+      } else {
+        await tx.subject.deleteMany({ where: { userId } });
+      }
+
+      // 3. Upsert subjects with strict tenant isolation (IDOR protection)
       const validUserSubjectIds = new Set<string>();
 
       for (const subj of subjects) {

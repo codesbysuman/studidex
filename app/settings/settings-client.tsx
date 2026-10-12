@@ -25,12 +25,25 @@ import {
     LogIn,
     LogOut,
 } from "lucide-react";
-import { useStudidex } from "@/lib/use-studidex";
+import { useStudidex, type AuthUser } from "@/lib/use-studidex";
+import { type StudidexState } from "@/lib/core";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { AuthModal } from "@/components/auth-modal";
 
-export default function SettingsPage() {
-    const { state, clearAll, user, isAuthenticated, logout, syncWithCloud, isSyncing, isDbConnected } = useStudidex();
+export default function SettingsPage({
+    initialUser,
+    initialState,
+    isDbConnected: initialDbConnected,
+}: {
+    initialUser?: AuthUser | null;
+    initialState?: StudidexState | null;
+    isDbConnected?: boolean;
+} = {}) {
+    const { state, clearAll, user, isAuthenticated, logout, syncWithCloud, isSyncing, isDbConnected } = useStudidex({
+        user: initialUser,
+        state: initialState,
+        isDbConnected: initialDbConnected,
+    });
     const [isAuthOpen, setIsAuthOpen] = useState(false);
     const [copied, setCopied] = useState(false);
     const [actionMessage, setActionMessage] = useState<string | null>(null);

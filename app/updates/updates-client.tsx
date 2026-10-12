@@ -15,11 +15,23 @@ import {
     RefreshCw,
     Sparkles,
 } from "lucide-react";
-import { useStudidex } from "@/lib/use-studidex";
-import { formatHumanDate, AcademicItem } from "@/lib/core";
+import { useStudidex, type AuthUser } from "@/lib/use-studidex";
+import { formatHumanDate, AcademicItem, type StudidexState } from "@/lib/core";
 
-export default function UpdatesPage() {
-    const { state } = useStudidex();
+export default function UpdatesPage({
+    initialUser,
+    initialState,
+    isDbConnected,
+}: {
+    initialUser?: AuthUser | null;
+    initialState?: StudidexState | null;
+    isDbConnected?: boolean;
+} = {}) {
+    const { state } = useStudidex({
+        user: initialUser,
+        state: initialState,
+        isDbConnected,
+    });
     const [activeFilter, setActiveFilter] = useState<"all" | "academic" | "opportunities" | "changes">("all");
     const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
 

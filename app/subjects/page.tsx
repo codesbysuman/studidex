@@ -7,6 +7,9 @@ export const metadata: Metadata = {
     description: "Overview of your active academic subjects, papers, syllabus units, and materials.",
 };
 
-export default function SubjectsPage() {
-    return <SubjectsPageClient />;
+import { getServerStudidexData } from "@/lib/server/studidex-server";
+
+export default async function SubjectsPage() {
+    const { user, state, isDbConnected } = await getServerStudidexData();
+    return <SubjectsPageClient initialUser={user} initialState={state} isDbConnected={isDbConnected} />;
 }

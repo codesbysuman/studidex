@@ -18,7 +18,12 @@ import {
     updateUserProfile,
     createItem,
     createMaterial,
+    updateMaterial,
     saveSubject,
+    deleteSubject,
+    saveTopic,
+    deleteTopic,
+    reconcileStudidexStates,
     UserProfile,
     AcademicPaper,
     MockTestAttempt,
@@ -27,13 +32,15 @@ import {
     AcademicItem,
     Material,
     Subject,
+    Topic,
     StudidexState,
 } from "./core";
 
 const emptySubscribe = () => () => {};
 const getClientHydrated = () => true;
 const getServerHydrated = () => false;
-const getServerSnapshot = () => INITIAL_STUDIDEX_STATE;
+let currentServerSnapshot: StudidexState = INITIAL_STUDIDEX_STATE;
+const getServerSnapshot = () => currentServerSnapshot;
 
 export interface AuthUser {
     id: string;
@@ -94,6 +101,53 @@ let inFlightAuthCheck: Promise<void> | null = null;
 let hasTriggeredInitialAuth = false;
 
 /**
+ * Initializes server-provided user and state into client store
+ */
+export function initStudidexServerState(
+    initialUser: AuthUser | null,
+    initialState?: StudidexState | null,
+    isDbConnected: boolean = false
+) {
+    if (initialUser !== undefined) {
+        hasTriggeredInitialAuth = true;
+        authStoreState = {
+            user: initialUser,
+            isCheckingAuth: false,
+            isDbConnected,
+            isSyncing: false,
+        };
+        serverAuthStoreState.user = initialUser;
+        serverAuthStoreState.isDbConnected = isDbConnected;
+        authListeners.forEach((listener) => listener());
+    }
+    if (initialState) {
+        currentServerSnapshot = initialState;
+        if (typeof window !== "undefined") {
+            const local = getStoredState();
+            if (local.items.length === 0 && local.subjects.length === 0 && initialState.items.length > 0) {
+                saveStoredState(initialState);
+            }
+        }
+    }
+}
+
+/**
+ * Client component to hydrate server-fetched Studidex data into client singleton store
+ */
+export function StudidexHydrator({
+    user,
+    state,
+    isDbConnected = false,
+}: {
+    user: AuthUser | null;
+    state?: StudidexState | null;
+    isDbConnected?: boolean;
+}) {
+    initStudidexServerState(user, state, isDbConnected);
+    return null;
+}
+
+/**
  * Single deduplicated fetch for /api/auth/me
  */
 async function performAuthCheck(): Promise<void> {
@@ -118,17 +172,23 @@ async function performAuthCheck(): Promise<void> {
                     isCheckingAuth: false,
                 });
 
-                // Auto-sync cloud state once on authenticated load
+                // Reconcile cloud state and local state smoothly without clobbering
                 try {
                     const syncRes = await fetch("/api/sync");
                     if (syncRes.ok) {
                         const syncData = await syncRes.json();
                         if (syncData.success && syncData.state) {
                             const local = getStoredState();
-                            if (syncData.state.subjects.length > 0 || syncData.state.items.length > 0) {
-                                saveStoredState(syncData.state);
-                            } else if (local.subjects.length > 0 || local.items.length > 0) {
-                                scheduleCloudSync(local);
+                            const reconciled = reconcileStudidexStates(local, syncData.state);
+                            saveStoredState(reconciled);
+
+                            // If local had additions or offline items that cloud lacks, sync back
+                            if (
+                                (local.items.length > 0 && syncData.state.items.length === 0) ||
+                                (local.subjects.length > 0 && syncData.state.subjects.length === 0) ||
+                                local.items.length > syncData.state.items.length
+                            ) {
+                                scheduleCloudSync(reconciled);
                             }
                         }
                     }
@@ -155,7 +215,7 @@ async function performAuthCheck(): Promise<void> {
 /**
  * Debounced background cloud sync helper
  */
-let syncDebounceTimer: any = null;
+let syncDebounceTimer: ReturnType<typeof setTimeout> | null = null;
 function scheduleCloudSync(nextState: StudidexState) {
     if (typeof window === "undefined" || !authStoreState.user) return;
     if (syncDebounceTimer) clearTimeout(syncDebounceTimer);
@@ -183,7 +243,14 @@ function scheduleCloudSync(nextState: StudidexState) {
 /**
  * React hook to synchronize state across client views, with PostgreSQL cloud sync
  */
-export function useStudidex() {
+export function useStudidex(initialData?: {
+    user?: AuthUser | null;
+    state?: StudidexState | null;
+    isDbConnected?: boolean;
+}) {
+    if (initialData?.user !== undefined && !hasTriggeredInitialAuth) {
+        initStudidexServerState(initialData.user, initialData.state, initialData.isDbConnected);
+    }
     const isHydrated = useSyncExternalStore(
         emptySubscribe,
         getClientHydrated,
@@ -250,9 +317,37 @@ export function useStudidex() {
         scheduleCloudSync(next);
     };
 
+    const modifyMaterial = (id: string, updates: Partial<Material>) => {
+        const current = getStoredState();
+        const next = updateMaterial(current, id, updates);
+        saveStoredState(next);
+        scheduleCloudSync(next);
+    };
+
     const addSubject = (subject: Partial<Subject> & { name: string }) => {
         const current = getStoredState();
         const next = saveSubject(current, subject);
+        saveStoredState(next);
+        scheduleCloudSync(next);
+    };
+
+    const removeSubject = (id: string) => {
+        const current = getStoredState();
+        const next = deleteSubject(current, id);
+        saveStoredState(next);
+        scheduleCloudSync(next);
+    };
+
+    const addTopic = (topic: Partial<Topic> & { subjectId: string; name: string }) => {
+        const current = getStoredState();
+        const next = saveTopic(current, topic);
+        saveStoredState(next);
+        scheduleCloudSync(next);
+    };
+
+    const removeTopic = (id: string) => {
+        const current = getStoredState();
+        const next = deleteTopic(current, id);
         saveStoredState(next);
         scheduleCloudSync(next);
     };
@@ -330,6 +425,9 @@ export function useStudidex() {
 
     const clearAll = () => {
         clearAllState();
+        if (auth.user) {
+            scheduleCloudSync(INITIAL_STUDIDEX_STATE);
+        }
     };
 
     return {
@@ -348,7 +446,11 @@ export function useStudidex() {
         modifyItem,
         addItem,
         addMaterial,
+        modifyMaterial,
         addSubject,
+        removeSubject,
+        addTopic,
+        removeTopic,
         removeItem,
         removeMaterial,
         saveTestAttempt,

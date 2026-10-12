@@ -16,12 +16,29 @@ import {
     GraduationCap,
     Sliders,
 } from "lucide-react";
-import { useStudidex } from "@/lib/use-studidex";
-import { formatHumanDate, categorizeMaterials } from "@/lib/core";
+import { useStudidex, type AuthUser } from "@/lib/use-studidex";
+import { formatHumanDate, categorizeMaterials, type StudidexState } from "@/lib/core";
 
-export default function SubjectDetailPage({ params }: { params: Promise<{ id: string }> }) {
-    const { id } = use(params);
-    const { state, setTopicProgress } = useStudidex();
+export default function SubjectDetailPage({
+    id: propId,
+    params,
+    initialUser,
+    initialState,
+    isDbConnected,
+}: {
+    id?: string;
+    params?: Promise<{ id: string }>;
+    initialUser?: AuthUser | null;
+    initialState?: StudidexState | null;
+    isDbConnected?: boolean;
+}) {
+    const resolvedParams = params ? use(params) : null;
+    const id = propId || resolvedParams?.id || "";
+    const { state, setTopicProgress } = useStudidex({
+        user: initialUser,
+        state: initialState,
+        isDbConnected,
+    });
 
     const subject = state.subjects.find((s) => s.id === id);
     if (!subject) {

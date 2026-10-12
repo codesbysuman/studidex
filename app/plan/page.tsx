@@ -10,6 +10,9 @@ export const metadata: Metadata = {
   },
 };
 
-export default function PlanPage() {
-  return <PlanClient />;
+import { getServerStudidexData } from "@/lib/server/studidex-server";
+
+export default async function PlanPage() {
+  const { user, state, isDbConnected } = await getServerStudidexData();
+  return <PlanClient initialUser={user} initialState={state} isDbConnected={isDbConnected} />;
 }

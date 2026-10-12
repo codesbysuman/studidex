@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { INITIAL_STUDIDEX_STATE } from "@/lib/core/sample-data";
+import { getServerStudidexData } from "@/lib/server/studidex-server";
 import PreparationViewClient from "./prepare-client";
 
 type Props = {
@@ -8,7 +9,10 @@ type Props = {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { id } = await params;
-  const item = INITIAL_STUDIDEX_STATE.items.find((i) => i.id === id);
+  const { state } = await getServerStudidexData();
+  const item =
+    state.items.find((i) => i.id === id) ||
+    INITIAL_STUDIDEX_STATE.items.find((i) => i.id === id);
 
   const title = item ? `Prepare: ${item.title}` : "Exam & Assessment Preparation";
   const description =
@@ -28,6 +32,15 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
-export default function PreparationViewPage({ params }: Props) {
-  return <PreparationViewClient params={params} />;
+export default async function PreparationViewPage({ params }: Props) {
+  const { id } = await params;
+  const { user, state, isDbConnected } = await getServerStudidexData();
+  return (
+    <PreparationViewClient
+      id={id}
+      initialUser={user}
+      initialState={state}
+      isDbConnected={isDbConnected}
+    />
+  );
 }

@@ -69,6 +69,29 @@ export function deleteItem(state: StudidexState, itemId: string): StudidexState 
 }
 
 /**
+ * Update an existing material
+ */
+export function updateMaterial(
+    state: StudidexState,
+    materialId: string,
+    updates: Partial<Material>
+): StudidexState {
+    const updatedMaterials = state.materials.map((m) => {
+        if (m.id !== materialId) return m;
+        return {
+            ...m,
+            ...updates,
+        };
+    });
+
+    return {
+        ...state,
+        materials: updatedMaterials,
+        lastUpdated: new Date().toISOString(),
+    };
+}
+
+/**
  * Delete a material
  */
 export function deleteMaterial(state: StudidexState, materialId: string): StudidexState {
@@ -116,7 +139,7 @@ export function recordTestAttempt(
  */
 export function saveSubject(state: StudidexState, subject: Partial<Subject> & { name: string }): StudidexState {
     const existingIdx = state.subjects.findIndex((s) => s.id === subject.id);
-    let updatedSubjects = [...state.subjects];
+    const updatedSubjects = [...state.subjects];
 
     if (existingIdx >= 0) {
         updatedSubjects[existingIdx] = {
@@ -137,6 +160,73 @@ export function saveSubject(state: StudidexState, subject: Partial<Subject> & { 
     return {
         ...state,
         subjects: updatedSubjects,
+        lastUpdated: new Date().toISOString(),
+    };
+}
+
+/**
+ * Delete a subject, its topics, and unlink or clear referencing items
+ */
+export function deleteSubject(state: StudidexState, subjectId: string): StudidexState {
+    const updatedSubjects = state.subjects.filter((s) => s.id !== subjectId);
+    const updatedTopics = state.topics.filter((t) => t.subjectId !== subjectId);
+    const updatedItems = state.items.map((i) => (i.subjectId === subjectId ? { ...i, subjectId: undefined } : i));
+    const updatedMaterials = state.materials.map((m) => (m.subjectId === subjectId ? { ...m, subjectId: undefined } : m));
+
+    const updatedProfile = {
+        ...state.profile,
+        enrolledSubjectIds: (state.profile?.enrolledSubjectIds || []).filter((id) => id !== subjectId),
+        papers: (state.profile?.papers || []).filter((p) => p.subjectId !== subjectId),
+    };
+
+    return {
+        ...state,
+        profile: updatedProfile,
+        subjects: updatedSubjects,
+        topics: updatedTopics,
+        items: updatedItems,
+        materials: updatedMaterials,
+        lastUpdated: new Date().toISOString(),
+    };
+}
+
+/**
+ * Add or update a syllabus topic
+ */
+export function saveTopic(state: StudidexState, topic: Partial<Topic> & { subjectId: string; name: string }): StudidexState {
+    const existingIdx = state.topics.findIndex((t) => t.id === topic.id);
+    const updatedTopics = [...state.topics];
+
+    if (existingIdx >= 0) {
+        updatedTopics[existingIdx] = {
+            ...updatedTopics[existingIdx],
+            ...topic,
+        };
+    } else {
+        const newTopic: Topic = {
+            id: topic.id || generateId("top"),
+            subjectId: topic.subjectId,
+            name: topic.name,
+            unit: topic.unit,
+            progressPercent: topic.progressPercent ?? 0,
+        };
+        updatedTopics.push(newTopic);
+    }
+
+    return {
+        ...state,
+        topics: updatedTopics,
+        lastUpdated: new Date().toISOString(),
+    };
+}
+
+/**
+ * Delete a topic
+ */
+export function deleteTopic(state: StudidexState, topicId: string): StudidexState {
+    return {
+        ...state,
+        topics: state.topics.filter((t) => t.id !== topicId),
         lastUpdated: new Date().toISOString(),
     };
 }
@@ -187,7 +277,7 @@ export function updateUserProfile(
     additionalSubjectNames?: string[],
     additionalPapers?: AcademicPaper[]
 ): StudidexState {
-    let updatedSubjects = [...state.subjects];
+    const updatedSubjects = [...state.subjects];
     const enrolledIds = new Set<string>(profileUpdates.enrolledSubjectIds ?? state.profile?.enrolledSubjectIds ?? []);
 
     // 1. Sync additional subject names
@@ -222,7 +312,7 @@ export function updateUserProfile(
     papersList.forEach((paper) => {
         if (!paper.name?.trim()) return;
         const cleanName = paper.name.trim();
-        
+
         // Find or create matching subject entry so it shows in materials & plan
         let matchingSubject = updatedSubjects.find(
             (s) =>
@@ -316,4 +406,3 @@ export function createMaterial(
         lastUpdated: new Date().toISOString(),
     };
 }
-

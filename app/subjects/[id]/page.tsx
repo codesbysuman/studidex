@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { INITIAL_STUDIDEX_STATE } from "@/lib/core/sample-data";
+import { getServerStudidexData } from "@/lib/server/studidex-server";
 import SubjectDetailClient from "./subject-client";
 
 type Props = {
@@ -8,7 +9,10 @@ type Props = {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { id } = await params;
-  const subject = INITIAL_STUDIDEX_STATE.subjects.find((s) => s.id === id);
+  const { state } = await getServerStudidexData();
+  const subject =
+    state.subjects.find((s) => s.id === id) ||
+    INITIAL_STUDIDEX_STATE.subjects.find((s) => s.id === id);
 
   const title = subject ? `${subject.name} (${subject.code})` : "Subject Details";
   const description =
@@ -28,6 +32,15 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
-export default function SubjectDetailPage({ params }: Props) {
-  return <SubjectDetailClient params={params} />;
+export default async function SubjectDetailPage({ params }: Props) {
+  const { id } = await params;
+  const { user, state, isDbConnected } = await getServerStudidexData();
+  return (
+    <SubjectDetailClient
+      id={id}
+      initialUser={user}
+      initialState={state}
+      isDbConnected={isDbConnected}
+    />
+  );
 }

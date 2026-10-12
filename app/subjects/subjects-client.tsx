@@ -14,10 +14,23 @@ import {
     Award,
     CheckCircle2,
 } from "lucide-react";
-import { useStudidex } from "@/lib/use-studidex";
+import { useStudidex, type AuthUser } from "@/lib/use-studidex";
+import { type StudidexState } from "@/lib/core";
 
-export default function SubjectsPageClient() {
-    const { state, addSubject } = useStudidex();
+export default function SubjectsPageClient({
+    initialUser,
+    initialState,
+    isDbConnected,
+}: {
+    initialUser?: AuthUser | null;
+    initialState?: StudidexState | null;
+    isDbConnected?: boolean;
+} = {}) {
+    const { state, addSubject } = useStudidex({
+        user: initialUser,
+        state: initialState,
+        isDbConnected,
+    });
     const [isAddOpen, setIsAddOpen] = useState(false);
     const [name, setName] = useState("");
     const [code, setCode] = useState("");

@@ -15,7 +15,6 @@ import {
     LogIn,
     LogOut,
     Cloud,
-    Plus,
     RefreshCw,
 } from "lucide-react";
 import { motion } from "motion/react";
@@ -54,11 +53,6 @@ const navigation = [
         label: "Updates",
         href: "/updates",
         icon: Bell,
-    },
-    {
-        label: "Add",
-        href: "/add",
-        icon: Plus,
     },
 ];
 
@@ -188,7 +182,7 @@ export function Navigation() {
                                     </div>
                                     <div>
                                         <p className="text-[12px] font-semibold text-foreground">Cloud Database</p>
-                                        <p className="text-[10px] text-foreground-muted">IndexedDB Offline Ready</p>
+                                        <p className="text-[10px] text-foreground-muted">Offline Ready</p>
                                     </div>
                                 </div>
                                 <button
@@ -212,8 +206,8 @@ export function Navigation() {
                             whileTap={{ scale: 0.98 }}
                             transition={spring}
                             className={`flex h-10 items-center gap-3 rounded-xl px-3 text-[13px] font-medium transition-colors ${pathname === "/profile"
-                                    ? "bg-surface text-foreground font-semibold shadow-2xs"
-                                    : "text-foreground-muted hover:bg-surface-subtle hover:text-foreground"
+                                ? "bg-surface text-foreground font-semibold shadow-2xs"
+                                : "text-foreground-muted hover:bg-surface-subtle hover:text-foreground"
                                 }`}
                         >
                             <User size={17} strokeWidth={1.8} />
@@ -228,8 +222,8 @@ export function Navigation() {
                             whileTap={{ scale: 0.98 }}
                             transition={spring}
                             className={`flex h-10 items-center gap-3 rounded-xl px-3 text-[13px] font-medium transition-colors ${pathname === "/settings"
-                                    ? "bg-surface text-foreground font-semibold shadow-2xs"
-                                    : "text-foreground-muted hover:bg-surface-subtle hover:text-foreground"
+                                ? "bg-surface text-foreground font-semibold shadow-2xs"
+                                : "text-foreground-muted hover:bg-surface-subtle hover:text-foreground"
                                 }`}
                         >
                             <Settings size={17} strokeWidth={1.8} />

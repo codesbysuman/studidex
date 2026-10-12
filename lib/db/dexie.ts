@@ -12,7 +12,7 @@ import {
 
 export interface DexieMetaRecord {
   key: string;
-  data: any;
+  data: unknown;
 }
 
 export class StudidexDexieDatabase extends Dexie {
@@ -60,7 +60,7 @@ export async function getDexieState(): Promise<StudidexState | null> {
       return null;
     }
 
-    const profile: UserProfile = profileRecord?.data || {
+    const profile: UserProfile = (profileRecord?.data as UserProfile) || {
       name: "",
       stage: "ug",
       hasCompletedOnboarding: true,
@@ -68,7 +68,7 @@ export async function getDexieState(): Promise<StudidexState | null> {
 
     return {
       version: 1,
-      lastUpdated: lastUpdatedRecord?.data || new Date().toISOString(),
+      lastUpdated: (lastUpdatedRecord?.data as string) || new Date().toISOString(),
       profile,
       subjects: subjects || [],
       topics: topics || [],

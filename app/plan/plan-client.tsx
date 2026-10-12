@@ -19,11 +19,24 @@ import {
     Loader2,
     BookOpen,
 } from "lucide-react";
-import { useStudidex } from "@/lib/use-studidex";
-import { getPlanAgenda, formatTime, formatHumanDate, AcademicItem } from "@/lib/core";
+import { useStudidex, type AuthUser } from "@/lib/use-studidex";
+import { getPlanAgenda, formatTime, formatHumanDate, AcademicItem, type StudidexState } from "@/lib/core";
+import { generateStudyPlanAction } from "@/lib/server/ai-actions";
 
-export default function PlanPage() {
-    const { state, addItem } = useStudidex();
+export default function PlanPage({
+    initialUser,
+    initialState,
+    isDbConnected,
+}: {
+    initialUser?: AuthUser | null;
+    initialState?: StudidexState | null;
+    isDbConnected?: boolean;
+} = {}) {
+    const { state, addItem } = useStudidex({
+        user: initialUser,
+        state: initialState,
+        isDbConnected,
+    });
     const agendaGroups = getPlanAgenda(state);
     const [filterType, setFilterType] = useState<"all" | "exam" | "class" | "deadline">("all");
 
@@ -81,23 +94,18 @@ export default function PlanPage() {
         setGeneratedPlan(null);
 
         try {
-            const res = await fetch("/api/ai/plan", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    targetExam: aiExamName.trim(),
-                    subject: aiSubject.trim(),
-                    daysAvailable: Number(aiDays) || 5,
-                    hoursPerDay: 3,
-                }),
+            const result = await generateStudyPlanAction({
+                targetExam: aiExamName.trim(),
+                subject: aiSubject.trim(),
+                daysAvailable: Number(aiDays) || 5,
+                hoursPerDay: 3,
             });
 
-            const data = await res.json();
-            if (!res.ok) {
-                throw new Error(data.error || "Failed to generate study plan.");
+            if (!result.success || !result.data) {
+                throw new Error(result.error || "Failed to generate study plan.");
             }
 
-            setGeneratedPlan(data.plan);
+            setGeneratedPlan(result.data.plan || result.data);
         } catch (err: any) {
             setAiPlanError(err?.message || "Failed to generate study plan.");
         } finally {

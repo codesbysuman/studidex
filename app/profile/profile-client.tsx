@@ -23,8 +23,8 @@ import {
     CheckCircle2,
     Save,
 } from "lucide-react";
-import { useStudidex } from "@/lib/use-studidex";
-import { EducationStage, PaperCategory, AcademicPaper, UserProfile } from "@/lib/core";
+import { useStudidex, type AuthUser } from "@/lib/use-studidex";
+import { EducationStage, PaperCategory, AcademicPaper, UserProfile, type StudidexState } from "@/lib/core";
 import { CustomSelect } from "@/components/ui/custom-select";
 
 const STAGE_CONFIGS: Record<
@@ -167,8 +167,20 @@ const PAPER_CATEGORY_OPTIONS: { value: PaperCategory; label: string; desc: strin
     { value: "Other", label: "General Paper", desc: "Standard paper" },
 ];
 
-export default function ProfileClient() {
-    const { state, user, updateProfile } = useStudidex();
+export default function ProfileClient({
+    initialUser,
+    initialState,
+    isDbConnected,
+}: {
+    initialUser?: AuthUser | null;
+    initialState?: StudidexState | null;
+    isDbConnected?: boolean;
+} = {}) {
+    const { state, user, updateProfile } = useStudidex({
+        user: initialUser,
+        state: initialState,
+        isDbConnected,
+    });
     const profile = state.profile || { name: user?.name || "", stage: "ug" };
 
     // Initial stage detection
@@ -208,25 +220,6 @@ export default function ProfileClient() {
 
     const [saveSuccess, setSaveSuccess] = useState(false);
 
-    // Sync on mount or when state profile changes
-    useEffect(() => {
-        if (state.profile) {
-            const p = state.profile;
-            setName(p.name || user?.name || "");
-            setStage(p.stage || initialStage);
-            setClassName(p.className || "");
-            setExaminingBody(p.examiningBody || p.board || "");
-            setInstitutionName(p.institutionName || "");
-            setCenter(p.center || "");
-            setMedium(p.medium || "English");
-            setDegree(p.degree || "");
-            setStream(p.stream || "");
-            setSpecialization(p.specialization || "");
-            setMinorSpecialization(p.minorSpecialization || "");
-            setPapers(p.papers || []);
-            setSelectedSubjectIds(p.enrolledSubjectIds || []);
-        }
-    }, [state.profile, user?.name]);
 
     const stageConfig = STAGE_CONFIGS[stage];
 

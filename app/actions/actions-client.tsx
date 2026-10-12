@@ -15,12 +15,25 @@ import {
     ListChecks,
     Plus,
     X,
+    Trash2,
 } from "lucide-react";
-import { useStudidex } from "@/lib/use-studidex";
-import { getActionsGrouped, formatHumanDate, AcademicItem } from "@/lib/core";
+import { useStudidex, type AuthUser } from "@/lib/use-studidex";
+import { getActionsGrouped, formatHumanDate, AcademicItem, type StudidexState } from "@/lib/core";
 
-export default function ActionsPage() {
-    const { state, toggleAction, modifyItem, addItem } = useStudidex();
+export default function ActionsPage({
+    initialUser,
+    initialState,
+    isDbConnected,
+}: {
+    initialUser?: AuthUser | null;
+    initialState?: StudidexState | null;
+    isDbConnected?: boolean;
+} = {}) {
+    const { state, toggleAction, modifyItem, addItem, removeItem } = useStudidex({
+        user: initialUser,
+        state: initialState,
+        isDbConnected,
+    });
     const grouped = getActionsGrouped(state);
     const [viewFilter, setViewFilter] = useState<"all" | "active" | "completed">("active");
 
@@ -170,14 +183,25 @@ export default function ActionsPage() {
                         </div>
                     </div>
 
-                    {/* Due Date Indicator */}
-                    {action.dueAt && (
-                        <div className="shrink-0 text-right text-[12px]">
-                            <span className="font-mono text-foreground-muted">
-                                {formatHumanDate(action.dueAt)}
-                            </span>
-                        </div>
-                    )}
+                    {/* Due Date & Actions */}
+                    <div className="flex items-center gap-2.5 shrink-0">
+                        {action.dueAt && (
+                            <div className="text-right text-[12px]">
+                                <span className="font-mono text-foreground-muted">
+                                    {formatHumanDate(action.dueAt)}
+                                </span>
+                            </div>
+                        )}
+                        <button
+                            type="button"
+                            onClick={() => removeItem(action.id)}
+                            className="rounded-lg p-1 text-foreground-faint hover:text-red-600 dark:hover:text-red-400 hover:bg-red-500/10 transition-colors"
+                            title="Delete task"
+                            aria-label="Delete task"
+                        >
+                            <Trash2 size={14} />
+                        </button>
+                    </div>
                 </div>
             </motion.div>
         );
@@ -300,7 +324,7 @@ export default function ActionsPage() {
                                 All caught up!
                             </h3>
                             <p className="text-[13px] text-foreground-muted max-w-sm mx-auto">
-                                You don't have any pending assignments or study tasks right now.
+                                You don&apos;t have any pending assignments or study tasks right now.
                             </p>
                             <button
                                 type="button"

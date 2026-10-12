@@ -24,7 +24,7 @@ export function validateImportJson(rawInput: string | unknown): ValidationResult
     const errors: string[] = [];
     const warnings: string[] = [];
 
-    let parsed: any;
+    let parsed: unknown;
 
     if (typeof rawInput === "string") {
         const trimmed = rawInput.trim();
@@ -37,10 +37,11 @@ export function validateImportJson(rawInput: string | unknown): ValidationResult
         }
         try {
             parsed = JSON.parse(trimmed);
-        } catch (e: any) {
+        } catch (e: unknown) {
+            const msg = e instanceof Error ? e.message : "Failed to parse JSON";
             return {
                 valid: false,
-                errors: [`Invalid JSON syntax: ${e.message || "Failed to parse JSON"}`],
+                errors: [`Invalid JSON syntax: ${msg}`],
                 warnings: [],
             };
         }
@@ -57,13 +58,14 @@ export function validateImportJson(rawInput: string | unknown): ValidationResult
     }
 
     // Normalize empty arrays/objects if missing
+    const obj = parsed as Record<string, unknown>;
     const envelope: ExternalImportEnvelope = {
-        version: typeof parsed.version === "number" ? parsed.version : 1,
-        input: parsed.input && typeof parsed.input === "object" ? parsed.input : undefined,
-        subjects: Array.isArray(parsed.subjects) ? parsed.subjects : [],
-        topics: Array.isArray(parsed.topics) ? parsed.topics : [],
-        items: Array.isArray(parsed.items) ? parsed.items : [],
-        materials: Array.isArray(parsed.materials) ? parsed.materials : [],
+        version: typeof obj.version === "number" ? obj.version : 1,
+        input: obj.input && typeof obj.input === "object" ? (obj.input as ExternalImportEnvelope["input"]) : undefined,
+        subjects: Array.isArray(obj.subjects) ? (obj.subjects as ExternalImportEnvelope["subjects"]) : [],
+        topics: Array.isArray(obj.topics) ? (obj.topics as ExternalImportEnvelope["topics"]) : [],
+        items: Array.isArray(obj.items) ? (obj.items as ExternalImportEnvelope["items"]) : [],
+        materials: Array.isArray(obj.materials) ? (obj.materials as ExternalImportEnvelope["materials"]) : [],
     };
 
     if (

@@ -6,6 +6,8 @@ import Header from "@/components/header";
 import { Navigation } from "@/components/navigation";
 import { ThemeProvider } from "@wrksz/themes/next";
 import { RememberAiFab } from "@/components/remember-ai-fab";
+import { getServerStudidexData } from "@/lib/server/studidex-server";
+import { StudidexHydrator } from "@/lib/use-studidex";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -123,11 +125,13 @@ const jsonLd = {
   ],
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const { user, state, isDbConnected } = await getServerStudidexData();
+
   return (
     <html lang="en" suppressHydrationWarning className={inter.className}>
       <head>
@@ -143,6 +147,7 @@ export default function RootLayout({
           defaultTheme="system"
           enableSystem
         >
+          <StudidexHydrator user={user} state={state} isDbConnected={isDbConnected} />
           <Navigation />
           <Header />
           <div className="md:pl-55">{children}</div>

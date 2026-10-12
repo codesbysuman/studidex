@@ -25,8 +25,9 @@ import {
     GraduationCap,
     CheckSquare,
 } from "lucide-react";
-import { useStudidex } from "@/lib/use-studidex";
-import { validateImportJson, ValidationResult, ExternalImportEnvelope } from "@/lib/core";
+import { useStudidex, type AuthUser } from "@/lib/use-studidex";
+import { validateImportJson, ValidationResult, ExternalImportEnvelope, type StudidexState } from "@/lib/core";
+import { compileInputAction } from "@/lib/server/ai-actions";
 
 const SAMPLE_EXTERNAL_JSON = `{
   "version": 1,
@@ -146,9 +147,21 @@ Convert raw academic inputs (class notices, circulars, syllabi, exam schedules) 
 
 Return valid JSON only. Preserve exact dates.`;
 
-export default function AddImportPage() {
+export default function AddImportPage({
+    initialUser,
+    initialState,
+    isDbConnected,
+}: {
+    initialUser?: AuthUser | null;
+    initialState?: StudidexState | null;
+    isDbConnected?: boolean;
+} = {}) {
     const router = useRouter();
-    const { state, addItem, addMaterial, addSubject, importEnvelope } = useStudidex();
+    const { state, addItem, addMaterial, addSubject, importEnvelope } = useStudidex({
+        user: initialUser,
+        state: initialState,
+        isDbConnected,
+    });
 
     const [activeTab, setActiveTab] = useState<"quick" | "ai" | "import" | "prompt" | "guide">("quick");
 
@@ -186,13 +199,15 @@ export default function AddImportPage() {
             const pending = sessionStorage.getItem("studidex_pending_import");
             if (pending) {
                 sessionStorage.removeItem("studidex_pending_import");
-                setJsonInput(pending);
-                const res = validateImportJson(pending);
-                setValidation(res);
-                if (res.valid && res.normalizedPayload) {
-                    setActiveTab("import");
-                    setStep("preview");
-                }
+                setTimeout(() => {
+                    setJsonInput(pending);
+                    const res = validateImportJson(pending);
+                    setValidation(res);
+                    if (res.valid && res.normalizedPayload) {
+                        setActiveTab("import");
+                        setStep("preview");
+                    }
+                }, 0);
             }
         }
     }, []);
@@ -277,18 +292,12 @@ export default function AddImportPage() {
         setAiError(null);
 
         try {
-            const res = await fetch("/api/ai/compile", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ input: rawAiInput }),
-            });
-
-            const data = await res.json();
-            if (!res.ok) {
-                throw new Error(data.error || "Unable to parse text.");
+            const result = await compileInputAction({ input: rawAiInput });
+            if (!result.success || !result.data) {
+                throw new Error(result.error || "Unable to parse text.");
             }
 
-            const payload = data.normalizedPayload || data.raw;
+            const payload = result.data.normalizedPayload || result.data.raw;
             setJsonInput(JSON.stringify(payload, null, 2));
             const vRes = validateImportJson(JSON.stringify(payload));
             setValidation(vRes);
