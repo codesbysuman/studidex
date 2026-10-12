@@ -52,6 +52,7 @@ export interface AuthUser {
     board?: string | null;
     institutionName?: string | null;
     specialization?: string | null;
+    role?: string | null;
 }
 
 // ==========================================

@@ -128,6 +128,7 @@ export async function GET(req: NextRequest) {
             timeSpentSeconds: a.timeSpentSeconds || 0,
           }));
 
+        const meta = (m.metadata as any) || {};
         return {
           id: m.id,
           type: m.type as any,
@@ -138,7 +139,17 @@ export async function GET(req: NextRequest) {
           topicIds: Array.isArray(m.topicIds) ? (m.topicIds as string[]) : undefined,
           content: m.content || undefined,
           testData: (m.testData as any) || undefined,
-          metadata: (m.metadata as any) || undefined,
+          metadata: meta,
+          isPublic: Boolean(meta.isPublic),
+          isPaid: Boolean(meta.isPaid),
+          price: typeof meta.price === "number" ? meta.price : 0,
+          downloadCount: typeof meta.downloadCount === "number" ? meta.downloadCount : 0,
+          stage: meta.stage || undefined,
+          board: meta.board || undefined,
+          stream: meta.stream || undefined,
+          specialization: meta.specialization || undefined,
+          subjectName: meta.subjectName || undefined,
+          authorName: meta.authorName || undefined,
           userProgress:
             matAttempts.length > 0
               ? {
@@ -443,8 +454,25 @@ export async function POST(req: NextRequest) {
 
         const existing = await tx.material.findUnique({
           where: { id: safeMatId },
-          select: { id: true, userId: true },
+          select: { id: true, userId: true, metadata: true },
         });
+
+        const existingMeta = (existing?.metadata as any) || {};
+        const incomingMeta = (mat.metadata as any) || {};
+        const mergedMeta = {
+          ...existingMeta,
+          ...incomingMeta,
+          isPublic: mat.isPublic !== undefined ? mat.isPublic : (incomingMeta.isPublic !== undefined ? incomingMeta.isPublic : existingMeta.isPublic || false),
+          isPaid: mat.isPaid !== undefined ? mat.isPaid : (incomingMeta.isPaid !== undefined ? incomingMeta.isPaid : existingMeta.isPaid || false),
+          price: mat.price !== undefined ? mat.price : (incomingMeta.price !== undefined ? incomingMeta.price : existingMeta.price || 0),
+          downloadCount: mat.downloadCount !== undefined ? mat.downloadCount : (incomingMeta.downloadCount !== undefined ? incomingMeta.downloadCount : existingMeta.downloadCount || 0),
+          stage: mat.stage || incomingMeta.stage || existingMeta.stage || null,
+          board: mat.board || incomingMeta.board || existingMeta.board || null,
+          stream: mat.stream || incomingMeta.stream || existingMeta.stream || null,
+          specialization: mat.specialization || incomingMeta.specialization || existingMeta.specialization || null,
+          subjectName: mat.subjectName || incomingMeta.subjectName || existingMeta.subjectName || null,
+          authorName: mat.authorName || incomingMeta.authorName || existingMeta.authorName || null,
+        };
 
         if (existing) {
           if (existing.userId === userId) {
@@ -456,7 +484,7 @@ export async function POST(req: NextRequest) {
                 subjectId: assignedSubjectId,
                 content: mat.content ? mat.content.slice(0, 100_000) : null,
                 testData: (mat.testData as any) || null,
-                metadata: (mat.metadata as any) || null,
+                metadata: mergedMeta,
               },
             });
           }
@@ -472,7 +500,7 @@ export async function POST(req: NextRequest) {
               description: mat.description ? mat.description.slice(0, 3000) : null,
               content: mat.content ? mat.content.slice(0, 100_000) : null,
               testData: (mat.testData as any) || null,
-              metadata: (mat.metadata as any) || null,
+              metadata: mergedMeta,
               topicIds: Array.isArray(mat.topicIds) ? (mat.topicIds as any) : [],
             },
           });

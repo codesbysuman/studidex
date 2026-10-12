@@ -1,5 +1,4 @@
-// lib/server/studidex-server.ts
-import { getAuthSession } from "@/lib/auth";
+import { getAuthSession, isAdminUser } from "@/lib/auth";
 import { prisma, checkDatabaseConnection } from "@/lib/prisma";
 import { StudidexState } from "@/lib/core/types";
 import { INITIAL_STUDIDEX_STATE } from "@/lib/core/sample-data";
@@ -34,6 +33,7 @@ export async function getServerStudidexData(): Promise<ServerStudidexData> {
           id: session.userId,
           email: session.email,
           name: session.name || null,
+          role: session.role || (isAdminUser(session.email) ? "admin" : "user"),
         },
         state: INITIAL_STUDIDEX_STATE,
         isDbConnected: false,
@@ -153,6 +153,7 @@ export async function getServerStudidexData(): Promise<ServerStudidexData> {
       id: userRecord.id,
       email: userRecord.email,
       name: userRecord.name,
+      role: session.role || (isAdminUser(userRecord.email) ? "admin" : "user"),
       stage: userRecord.stage,
       className: userRecord.className,
       examiningBody: userRecord.examiningBody,

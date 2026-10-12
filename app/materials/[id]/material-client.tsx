@@ -18,6 +18,8 @@ import {
     RotateCcw,
     Sparkles,
     XCircle,
+    Download,
+    Lock,
 } from "lucide-react";
 import { useStudidex, type AuthUser } from "@/lib/use-studidex";
 import { MockTestAttempt, formatHumanDate, generateId, type StudidexState } from "@/lib/core";
@@ -64,6 +66,43 @@ export default function MaterialDetailPage({
     const [aiSummaryLoading, setAiSummaryLoading] = useState(false);
     const [aiSummaryData, setAiSummaryData] = useState<any | null>(null);
     const [aiSummaryError, setAiSummaryError] = useState<string | null>(null);
+
+    // Download State
+    const [downloading, setDownloading] = useState(false);
+    const [downloadSuccess, setDownloadSuccess] = useState(false);
+
+    const handleDownload = async () => {
+        if (material.isPaid) {
+            alert("This is a paid resource and cannot be downloaded directly.");
+            return;
+        }
+
+        setDownloading(true);
+        try {
+            const res = await fetch(`/api/materials/${material.id}/download`, { method: "POST" });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || "Failed to download");
+
+            const blob = new Blob([data.content || material.content || material.description || ""], {
+                type: "text/markdown;charset=utf-8",
+            });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = data.filename || `${material.title.replace(/\s+/g, "_")}.md`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+
+            setDownloadSuccess(true);
+            setTimeout(() => setDownloadSuccess(false), 3000);
+        } catch (e: any) {
+            alert(e?.message || "Download failed.");
+        } finally {
+            setDownloading(false);
+        }
+    };
 
     const handleSummarizeWithAi = async () => {
         if (!material.content && !material.description) return;
@@ -201,9 +240,30 @@ export default function MaterialDetailPage({
                         )}
                     </div>
 
-                    <h1 className="mt-2 text-2xl font-semibold tracking-[-0.03em] text-foreground sm:text-3xl">
-                        {material.title}
-                    </h1>
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mt-2">
+                        <h1 className="text-2xl font-semibold tracking-[-0.03em] text-foreground sm:text-3xl">
+                            {material.title}
+                        </h1>
+
+                        <div className="flex items-center gap-2 shrink-0">
+                            {material.isPaid ? (
+                                <span className="inline-flex items-center gap-1.5 rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-1.5 text-[12px] font-semibold text-amber-700 dark:text-amber-300">
+                                    <Lock size={13} />
+                                    <span>Paid Resource (${material.price || 4.99})</span>
+                                </span>
+                            ) : (
+                                <button
+                                    type="button"
+                                    onClick={handleDownload}
+                                    disabled={downloading}
+                                    className="inline-flex items-center gap-1.5 rounded-xl border border-border bg-surface px-3 py-1.5 text-[12px] font-semibold text-foreground hover:bg-surface-subtle shadow-2xs transition-all active:scale-98 cursor-pointer disabled:opacity-50"
+                                >
+                                    <Download size={13} />
+                                    <span>{downloading ? "Downloading..." : downloadSuccess ? "Downloaded!" : "Download (.md)"}</span>
+                                </button>
+                            )}
+                        </div>
+                    </div>
 
                     {material.description && (
                         <p className="mt-1.5 text-[14px] text-foreground-muted">

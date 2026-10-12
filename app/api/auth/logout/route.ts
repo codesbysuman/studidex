@@ -1,18 +1,34 @@
 // app/api/auth/logout/route.ts
 import { NextResponse } from "next/server";
-import { clearAuthCookie, AUTH_COOKIE_NAME, AUTH_COOKIE_OPTIONS } from "@/lib/auth";
+import {
+  clearAuthCookies,
+  ACCESS_COOKIE_NAME,
+  REFRESH_COOKIE_NAME,
+  AUTH_COOKIE_NAME,
+  ACCESS_COOKIE_OPTIONS,
+  REFRESH_COOKIE_OPTIONS,
+} from "@/lib/auth";
 
 export async function POST() {
   try {
-    await clearAuthCookie();
+    await clearAuthCookies();
     const response = NextResponse.json({
       success: true,
       message: "Logged out successfully.",
     });
 
-    // Also explicitly set cleared cookie on outgoing response headers
+    response.cookies.set(ACCESS_COOKIE_NAME, "", {
+      ...ACCESS_COOKIE_OPTIONS,
+      maxAge: 0,
+      expires: new Date(0),
+    });
+    response.cookies.set(REFRESH_COOKIE_NAME, "", {
+      ...REFRESH_COOKIE_OPTIONS,
+      maxAge: 0,
+      expires: new Date(0),
+    });
     response.cookies.set(AUTH_COOKIE_NAME, "", {
-      ...AUTH_COOKIE_OPTIONS,
+      ...ACCESS_COOKIE_OPTIONS,
       maxAge: 0,
       expires: new Date(0),
     });

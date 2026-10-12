@@ -3,9 +3,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma, checkDatabaseConnection } from "@/lib/prisma";
 import {
   comparePassword,
-  createSessionToken,
-  setAuthCookie,
+  createTokenPair,
+  setAuthCookies,
   dummyPasswordCompare,
+  isAdminUser,
 } from "@/lib/auth";
 import {
   rateLimit,
@@ -100,18 +101,19 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const token = await createSessionToken({
+    const tokens = await createTokenPair({
       userId: user.id,
       email: user.email,
       name: user.name || undefined,
     });
 
-    await setAuthCookie(token);
+    await setAuthCookies(tokens);
 
     const safeUser = {
       id: user.id,
       email: user.email,
       name: user.name,
+      role: isAdminUser(user.email) ? "admin" : "user",
       stage: user.stage,
       className: user.className,
       degree: user.degree,

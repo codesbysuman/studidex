@@ -150,7 +150,7 @@ export default async function RootLayout({
           <StudidexHydrator user={user} state={state} isDbConnected={isDbConnected} />
           <Navigation />
           <Header />
-          <div className="md:pl-55">{children}</div>
+          <div className="md:pl-55 min-h-[calc(100vh-4rem)] pb-20 md:pb-6">{children}</div>
           <RememberAiFab />
         </ThemeProvider>
       </body>

@@ -51,9 +51,6 @@ export default function Header({ className = "" }: { className?: string }) {
             ) : (
               <Cloud size={13} />
             )}
-            <span className={!isSyncing && !isAuthenticated ? `hidden` : `font-semibold`}>
-              {isSyncing ? "Syncing" : isAuthenticated ? "Synced" : null}
-            </span>
             {isAuthenticated && !isSyncing && (
               <span className="h-1.5 w-1.5 rounded-full bg-green-500 animate-pulse" />
             )}

@@ -1,6 +1,6 @@
 // app/api/auth/me/route.ts
 import { NextRequest, NextResponse } from "next/server";
-import { getAuthSession } from "@/lib/auth";
+import { getAuthSession, isAdminUser } from "@/lib/auth";
 import { prisma, checkDatabaseConnection } from "@/lib/prisma";
 import { rateLimit, getClientIp, createRateLimitResponse, getRateLimitHeaders } from "@/lib/rate-limit";
 
@@ -70,7 +70,10 @@ export async function GET(req: NextRequest) {
     return NextResponse.json(
       {
         authenticated: true,
-        user,
+        user: {
+          ...user,
+          role: isAdminUser(user.email) ? "admin" : "user",
+        },
         databaseOffline: false,
       },
       { headers: getRateLimitHeaders(limit) }

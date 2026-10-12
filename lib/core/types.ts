@@ -256,6 +256,16 @@ export interface Material {
     content?: string; // Text content or rich notes
     url?: string;
     testData?: MockTestData;
+    isPublic?: boolean;
+    isPaid?: boolean;
+    price?: number;
+    downloadCount?: number;
+    stage?: EducationStage;
+    board?: string;
+    stream?: string;
+    specialization?: string;
+    subjectName?: string;
+    authorName?: string;
     userProgress?: {
         completed?: boolean;
         lastAttemptScore?: number;
@@ -269,6 +279,16 @@ export interface Material {
         unit?: string;
         author?: string;
         fileSize?: string;
+        isPublic?: boolean;
+        isPaid?: boolean;
+        price?: number;
+        downloadCount?: number;
+        stage?: string;
+        board?: string;
+        stream?: string;
+        specialization?: string;
+        subjectName?: string;
+        authorName?: string;
         [key: string]: unknown;
     };
 }
